@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="CollectionViewSample.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:local="clr-namespace:CollectionViewSample"
+    Shell.FlyoutBehavior="Disabled"
+    Shell.TabBarIsVisible="False">
+   
+    <FlyoutItem >
+        <ShellContent Title="No horizontal scroll" Route="noscroll">
+            <local:NoScrollPage x:Name="noscroll_page"/>
+        </ShellContent>
+        <ShellContent Title="Scrolls in both directions" Route="hscroll">
+            <local:HScrollPage x:Name="hscroll_page"/>
+        </ShellContent>
+    </FlyoutItem>
+</Shell>
