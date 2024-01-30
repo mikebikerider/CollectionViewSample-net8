@@ -2,6 +2,7 @@
 using Android.Util;
 using Android.Widget;
 using Android.Graphics;
+using Android.Content;
 
 namespace CollectionViewSample
 {
@@ -10,8 +11,8 @@ namespace CollectionViewSample
         static public double MeasureTextHeight(string text, double fontSize)
         {
             //round up
-            float fsize = (float)Math.Ceiling(fontSize * TextScaleFactor);
-            var context = Platform.AppContext;
+            Context context = Platform.AppContext;
+            float fsize = (float)Math.Ceiling(fontSize * FontScale);
             var textView = new TextView(context) { Typeface = Typeface.Default };
             textView.SetTextSize(ComplexUnitType.Px, fsize);
             textView.SetText(text, TextView.BufferType.Normal);
@@ -24,10 +25,10 @@ namespace CollectionViewSample
 
         public static double MeasureTextWidth(string text, double fontSize)
         {
-            //round up, decimal value returns wrong size
+            Context context = Platform.AppContext;
+            //round up, decimal value can return wrong size
             //this way it should fit always
-            float fsize = (float)Math.Ceiling(fontSize * TextScaleFactor);
-            var context = Platform.AppContext;
+            float fsize = (float)Math.Ceiling(fontSize * FontScale);
             TextView textView = new(context) { Typeface = Typeface.Default };
             textView.SetTextSize(ComplexUnitType.Px, fsize);
             textView.SetText(text, TextView.BufferType.Normal);
@@ -36,16 +37,25 @@ namespace CollectionViewSample
             int heightMeasureSpec = Android.Views.View.MeasureSpec.MakeMeasureSpec(height, MeasureSpecMode.AtMost);
             textView.Measure(widthMeasureSpec, heightMeasureSpec);
             return textView.MeasuredWidth;
-
         }
-        private static double TextScaleFactor
+        public static float FontScale
         {
             get
             {
-                DisplayMetrics dm = Platform.AppContext.Resources.DisplayMetrics;
-                float sd = Math.Max(1, dm.ScaledDensity);
-                float density = Math.Max(1, dm.Density);
-                return sd / density;
+                float scale;
+                Context context = Platform.AppContext;
+                Android.Content.Res.Resources? resources = context.Resources;
+                if (resources != null)
+                {
+                    Android.Content.Res.Configuration? config = resources.Configuration;
+                    if (config != null)
+                    {
+                        scale = config.FontScale;
+                        if (scale > .4)
+                            return scale;
+                    }
+                }
+                return 1f;
             }
         }
     }

@@ -31,11 +31,15 @@ public partial class NoScrollPage : ContentPage
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
+
 #if ANDROID
         //the need for this code in MAUI is an embarassment
         //in a real app the minimum bottomBar width is calculated and WidthRequest be the bigger of width and calculated width
-        //not need for that in Xamarin.Forms and MAUI iOS
+        //no need for that in Xamarin.Forms and MAUI iOS
         bottomGrid.WidthRequest = width;
+#else
+        //the above line is not needed under iOS, however if issued in an app running on iPhone with the notch or dynamic island
+        //then the bottomGrid will ber resized to size larger than width by the sum of the left and right inset
 #endif
     }
     public async void SetAppTheme(AppTheme apptheme)

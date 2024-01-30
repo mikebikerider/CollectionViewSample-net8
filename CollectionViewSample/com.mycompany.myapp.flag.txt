@@ -1,0 +1,26 @@
+I wrote this sample app to explore why MAUI CollectionView performs so poorly compared to Xamarin.Forms CollectionVew.
+
+The app has two pages that can be navigated between via the Navigation bar button. Naviagation bar can be hidden and navigation controls moved to the bottom bar. There is check box for that in Settings.
+
+The first page has vertical scroll CollectionView with a header and two-colums content defined in Xaml data template.
+
+The second page has vertical sroll 3-columns CollectionView placed inside horizontal ScrollView.
+
+The header is not CollectionView built-in header that scrolls together with items. Mine always stays on top.
+
+The number of items initially loaded in either CollectionView is 50 in Debug mode and 100 in Release mode.
+
+The number of items loaded when the user taps the bottom bar 'Load' button is 200 in Debug mode and 5000 in Release mode. That number can be changed in Settings individually for each CollectionView.
+
+In Xamarin.Forms placing a CollectionVewi or ListView inside a ScrollView has no ill effects as long as the ScrollView scroll direction is different from CollectionView/ListView scroll direction.
+Not so in MAUI. I think the cause of poor performance is controls placed inside MAUI ScrollView are not properly sized. Not just CollectionView or ListView.
+
+The app bottom bar is 3-columns 1-row grid ColumnDefinitions="auto,*,auto" placed inside a Horizontal scroll ScrollView inside a border. The bottom grid columns are holding 3 buttons. The 'Settings' button is in the middle star column and should be in the center of bottom bar. The Up/Down button in the 'auto' column should be at the right end. On iOS it is without extra code. On Android the size of the 3-column grid is calculated as if the middle 'star' column is 'auto'. To make it look as desired I added a line bottomBar.WidthRequest = width in OnSizeAllocated(). The sample CollectionView item defined in the DataTemplate are is one row multiple columns grid, one of the columns is star. Such CollectionView placed inside a ScrollView is affected.
+Height of the controls placed inside a ScrollView is also incorrectly calculated. That affects srolling and loading.
+
+On Android the second page with Horizontal scrolling may not even load unless the height of the CollectionView height is corrected in OnSizeAllocated. On iOS that adjustment is not necessary. But there is a different sizing problem under iOS. When the CollectionView is loaded and scrolled down to the bottom the last item is fully visible. After the device is rotated the last row is only partially visible or not visible at all with larger number of items. That persists after restoring original orientation.
+Horizontal size correction in SizeAllocated() that works for Android does not work that well for iOS. If iPhone 
+  
+ 
+
+

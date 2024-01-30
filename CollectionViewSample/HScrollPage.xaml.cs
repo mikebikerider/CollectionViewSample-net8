@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Maui.Controls.PlatformConfiguration;
+using System.Diagnostics;
+using Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;
 
 namespace CollectionViewSample
 {
@@ -34,27 +36,41 @@ namespace CollectionViewSample
                 {
                     if (cvc.Count > 0)
                     {
-                        double cw = Math.Max(width, cvc[^1].Cw);
+                        double cw = Math.Max(width, cvc[0].Cw);
 #if ANDROID
                         for (int i = 0; i < cvc.Count; i++)
                         {
                             cvc[i].W = cw;
                         }
-#endif
+                        //collectionViewGrid resizes correctly
+                        //collectionView does not
                         collectionView1.WidthRequest = cw;
+#else
+                        //on iPhone with the nothch or dynamic island Grid inside a ScrollView is not resized corretly
+                        //dimensions seem miscalcullated by safe area insets values and require correction
+                        //nothing like that in Xamarin.Forms
+                        Thickness safeareainsets = On<iOS>().SafeAreaInsets();
+                        collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom;
+                        Debug.WriteLine("Left inset: " + safeareainsets.Left.ToString());
+                        Debug.WriteLine("Right inset: " + safeareainsets.Right.ToString());
+                        if (width > height)
+                            collectionViewGrid.WidthRequest = cw - safeareainsets.Left - safeareainsets.Right;
+                        else
+                            collectionViewGrid.WidthRequest = cw;
+#endif
                     }
                 }
             }
 
 
-            //not need for that in Xamarin.Forms and MAUI iOS
+            //not need for that in Xamarin.Forms
 #if ANDROID
             //in a real app the minimum bottomBar width must be calculated
             //bottomGrid has a star column that should adjust the width automaticlly without width calculation
             //this seems to be a residual of treating star columns and rows as auto introduced early on due to somebodies dumb suggestion
             bottomGrid.WidthRequest = width;
             //without this line loading is very slow to forever, scrolling jerky the app might even freeze when orientation changes
-            collectionView1.HeightRequest = height - headerGrid.Height - bottomBorder.Height;
+            collectionViewGrid.HeightRequest = height - bottomBorder.Height;
             //issuing the above line in iOS does no good
 #endif
         }
@@ -80,15 +96,15 @@ namespace CollectionViewSample
             double fsize = nameLabel.FontSize;
             Debug.WriteLine("Font size:" + fsize.ToString());
             double w0 = ScreenMetrics.MeasureTextWidth("4444", fsize) + fsize + 10;
-            double w1 = ScreenMetrics.MeasureTextWidth("Column 1",fsize) + fsize;
-            double w2 = ScreenMetrics.MeasureTextWidth("Column 2",fsize) + fsize;
-            double w3 = ScreenMetrics.MeasureTextWidth("Column 3", fsize) + fsize + 20;
+            double w1 = ScreenMetrics.MeasureTextWidth("Column 1",fsize) + fsize + 10;
+            double w2 = ScreenMetrics.MeasureTextWidth("Column 2",fsize) + fsize + 10;
+            double w3 = ScreenMetrics.MeasureTextWidth("Column 3", fsize) + fsize + 10;
             for (int i = 0; i < cvc.Count; i++)
             {
-                w0 = Math.Max(w0, ScreenMetrics.MeasureTextWidth(cvc[i].ItemNo, fsize) + fsize + 10); //right margin 10
-                w1 = Math.Max(w1, ScreenMetrics.MeasureTextWidth(cvc[i].FirstName, fsize) + fsize);
-                w2 = Math.Max(w2, ScreenMetrics.MeasureTextWidth(cvc[i].LastName, fsize) + fsize);
-                w3 = Math.Max(w3, ScreenMetrics.MeasureTextWidth(cvc[i].Occupation,fsize) + fsize);
+                w0 = Math.Max(w0, ScreenMetrics.MeasureTextWidth(cvc[i].ItemNo, fsize) + fsize + 10);
+                w1 = Math.Max(w1, ScreenMetrics.MeasureTextWidth(cvc[i].FirstName, fsize) + fsize + 10);
+                w2 = Math.Max(w2, ScreenMetrics.MeasureTextWidth(cvc[i].LastName, fsize) + fsize + 10);
+                w3 = Math.Max(w3, ScreenMetrics.MeasureTextWidth(cvc[i].Occupation,fsize) + fsize + 10);
 
             }
             double w = Math.Max(Width, w0 + w1 + w2 + w3);
@@ -301,7 +317,7 @@ namespace CollectionViewSample
                         loadButton.Source = load;
                         upDownLabel.Text = "Down";
 #endif
-*/
+                        */
                         loadButton.IsEnabled = true;
                         collectionView1.Opacity = 1;
                         firsttime = false;

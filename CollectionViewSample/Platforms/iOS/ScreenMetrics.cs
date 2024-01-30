@@ -13,7 +13,7 @@ namespace CollectionViewSample
             var boundSize = new SizeF(float.PositiveInfinity, float.PositiveInfinity);
 
             var options = NSStringDrawingOptions.UsesFontLeading | NSStringDrawingOptions.UsesLineFragmentOrigin;
-            UIFont font = UIFont.SystemFontOfSize((float)fontSize);
+            UIFont font = UIFont.SystemFontOfSize((float)(fontSize));
             var attributes = new UIStringAttributes
             {
 
@@ -27,13 +27,13 @@ namespace CollectionViewSample
         }
         public static double MeasureTextWidth(string text, double fontSize)
         {
-            var nsText = new NSString(text);
+           var nsText = new NSString(text);
 
             var boundSize = new SizeF(float.PositiveInfinity, float.PositiveInfinity);
 
             var options = NSStringDrawingOptions.UsesFontLeading | NSStringDrawingOptions.UsesLineFragmentOrigin;
 
-            UIFont font = UIFont.SystemFontOfSize((float)fontSize);
+            UIFont font = UIFont.SystemFontOfSize((float)(fontSize));
             var attributes = new UIStringAttributes
             {
 
