@@ -30,6 +30,10 @@ namespace CollectionViewSample
             //there is no need for overriding in Xamarin.Forms
             //iOS net8.0 after screen is rotated the bottom rows do not scroll into view
             base.OnSizeAllocated(width, height);
+            Thickness safeareainsets = new Thickness(0);
+#if IOS
+            safeareainsets = On<iOS>().SafeAreaInsets();
+#endif
             if (collectionView1.ItemsSource != null)
             {
                 if (collectionView1.ItemsSource is List<CVcontent> cvc)
@@ -49,7 +53,7 @@ namespace CollectionViewSample
                         //on iPhone with the nothch or dynamic island Grid inside a ScrollView is not resized corretly
                         //dimensions seem miscalcullated by safe area insets values and require correction
                         //nothing like that in Xamarin.Forms
-                        Thickness safeareainsets = On<iOS>().SafeAreaInsets();
+
                         collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom;
                         Debug.WriteLine("Left inset: " + safeareainsets.Left.ToString());
                         Debug.WriteLine("Right inset: " + safeareainsets.Right.ToString());
@@ -71,7 +75,9 @@ namespace CollectionViewSample
             bottomGrid.WidthRequest = width;
             //without this line loading is very slow to forever, scrolling jerky the app might even freeze when orientation changes
             collectionViewGrid.HeightRequest = height - bottomBorder.Height;
-            //issuing the above line in iOS does no good
+
+#else
+            collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom;
 #endif
         }
         public async void SetAppTheme(AppTheme apptheme)
@@ -305,22 +311,20 @@ namespace CollectionViewSample
                         loadButton.Source = load;
                         nameLabel.Text = "Column 1";
                         collectionView1.ItemsSource = cvc;
-//#if IOS
                         collectionView1.SelectedItem = cvc[^1];
                         collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
                         upDownButton.Source = uparrow;
                         upDownLabel.Text = "Up";
-/*
-#else
-                        collectionView1.SelectedItem = cvc[0];
-                        upDownButton.Source = downarrow;
-                        loadButton.Source = load;
-                        upDownLabel.Text = "Down";
-#endif
-                        */
                         loadButton.IsEnabled = true;
                         collectionView1.Opacity = 1;
                         firsttime = false;
+#if IOS
+                        Thickness safeareainsets = On<iOS>().SafeAreaInsets();
+                        Debug.WriteLine("Right inset: " + safeareainsets.Right.ToString());
+                        if (Width > Height)
+                            collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width) - safeareainsets.Left - safeareainsets.Right;
+                        collectionViewGrid.HeightRequest = Height - bottomBorder.Height - safeareainsets.Bottom;
+#endif
                         activityIndicator.IsRunning = false;
                     }
                 }
