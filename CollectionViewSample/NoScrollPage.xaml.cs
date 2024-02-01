@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Threading.Tasks;
+
 namespace CollectionViewSample;
 
 public partial class NoScrollPage : ContentPage
@@ -59,9 +61,8 @@ public partial class NoScrollPage : ContentPage
             }
         }); 
     }
-    private double[] ContentColumnsWidth(List<CVcontent> cvc)
+    private Task<double[]> ContentColumnsWidth(List<CVcontent> cvc, double fsize)
     {
-        double fsize = nameLabel.FontSize;
         double w0 = ScreenMetrics.MeasureTextWidth("5555", fsize) + fsize + 10;
         double w1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + fsize;
         double w2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize;
@@ -71,14 +72,15 @@ public partial class NoScrollPage : ContentPage
             w1 = Math.Max(w1, ScreenMetrics.MeasureTextWidth(cvc[i].FirstName, fsize) + fsize);
             w2 = Math.Max(w2, ScreenMetrics.MeasureTextWidth(cvc[i].LastName, fsize) + fsize);
         }
-        double w = Math.Max(Width, w0 + w1 + w2);
+        double cw = Math.Max(Width, w0 + w1 + w2);
         for (int i = 0; i < cvc.Count; i++)
         {
             cvc[i].Cw0 = w0;
             cvc[i].Cw1 = w1;
             cvc[i].Cw2 = w2;
         }
-        return [w0, w1, w2];
+        double[] w = [w0, w1, w2];
+        return Task.FromResult(w);
     }
     private void CollectionViewItem_Tapped(object sender, TappedEventArgs e)
     {
@@ -220,7 +222,7 @@ public partial class NoScrollPage : ContentPage
             {
                 collectionView1.ItemsSource = new List<CVcontent>();
                 double fsize = numberItemsEntry.FontSize;
-                numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("55555", fsize) + fsize + 10;
+                numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("555555", fsize) + fsize + 10;
                 numberItemsEntry.Text = reloadnumber.ToString();
                 loadCollectionView(loadnumber);
             }
@@ -247,7 +249,7 @@ public partial class NoScrollPage : ContentPage
             {
                 cvc.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", "") });
             }
-            double[] w = ContentColumnsWidth(cvc);
+            double[] w = await ContentColumnsWidth(cvc,nameLabel.FontSize);
             nameLabel.Text = "";
             headerGrid.ColumnDefinitions[0].Width = new GridLength(w[0]);
             headerGrid.ColumnDefinitions[1].Width = new GridLength(w[1]);

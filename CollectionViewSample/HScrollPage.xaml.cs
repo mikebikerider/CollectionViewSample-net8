@@ -1,6 +1,8 @@
-﻿using Microsoft.Maui.Controls.PlatformConfiguration;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using Microsoft.Maui.Controls.PlatformConfiguration;
 using Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;
+using System.Threading.Tasks;
+
 
 namespace CollectionViewSample
 {
@@ -53,14 +55,9 @@ namespace CollectionViewSample
                         //on iPhone with the nothch or dynamic island Grid inside a ScrollView is not resized corretly
                         //dimensions seem miscalcullated by safe area insets values and require correction
                         //nothing like that in Xamarin.Forms
-
                         collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom;
-                        Debug.WriteLine("Left inset: " + safeareainsets.Left.ToString());
-                        Debug.WriteLine("Right inset: " + safeareainsets.Right.ToString());
-                        if (width > height)
-                            collectionViewGrid.WidthRequest = cw - safeareainsets.Left - safeareainsets.Right;
-                        else
-                            collectionViewGrid.WidthRequest = cw;
+                        collectionViewGrid.WidthRequest = cw - safeareainsets.Left - safeareainsets.Right;
+
 #endif
                     }
                 }
@@ -97,9 +94,8 @@ namespace CollectionViewSample
                 }
             });
         }
-        private double[] ContentColumnsWidth(List<CVcontent> cvc)
+        private Task<double[]> ContentColumnsWidth(List<CVcontent> cvc, double fsize)
         {
-            double fsize = nameLabel.FontSize;
             Debug.WriteLine("Font size:" + fsize.ToString());
             double w0 = ScreenMetrics.MeasureTextWidth("4444", fsize) + fsize + 10;
             double w1 = ScreenMetrics.MeasureTextWidth("Column 1",fsize) + fsize + 10;
@@ -113,7 +109,7 @@ namespace CollectionViewSample
                 w3 = Math.Max(w3, ScreenMetrics.MeasureTextWidth(cvc[i].Occupation,fsize) + fsize + 10);
 
             }
-            double w = Math.Max(Width, w0 + w1 + w2 + w3);
+            double cw = Math.Max(Width, w0 + w1 + w2 + w3);
             for (int i = 0; i < cvc.Count; i++)
             {
                 cvc[i].Cw0 = w0;
@@ -121,10 +117,11 @@ namespace CollectionViewSample
                 cvc[i].Cw2 = w2;
                 cvc[i].Cw3 = w3;
 #if ANDROID
-                cvc[i].W = w;
+                cvc[i].W = cw;
 #endif
             }
-            return [w0,w1,w2,w3];
+            double[] w = [w0,w1,w2,w3];
+            return Task.FromResult(w);
         }
         private void CollectionViewItem_Tapped(object sender, TappedEventArgs e)
         {
@@ -270,7 +267,7 @@ namespace CollectionViewSample
                 numberItemsEntry.Text = reloadnumber.ToString();
                 collectionView1.ItemsSource = new List<CVcontent>();
                 double fsize = numberItemsEntry.FontSize;
-                numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("55555", fsize) + fsize + 10;
+                numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("555555", fsize) + fsize + 10;
                 await Task.Delay(500);
                 loadCollectionView(loadnumber);
             }
@@ -300,13 +297,17 @@ namespace CollectionViewSample
                         {
                             cvc.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", ""), Occupation = Path.GetRandomFileName().Replace(".", "") });
                         }
-                        double[] w = ContentColumnsWidth(cvc);
                         nameLabel.Text = "";
+                        double[] w = await ContentColumnsWidth(cvc,nameLabel.FontSize);
                         headerGrid.ColumnDefinitions[0].Width = new GridLength(w[0]);
                         headerGrid.ColumnDefinitions[1].Width = new GridLength(w[1]);
                         headerGrid.ColumnDefinitions[2].Width = new GridLength(w[2]);
 #if ANDROID
                         collectionView1.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width);
+#else
+                        Thickness safeareainsets = On<iOS>().SafeAreaInsets();
+                        collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width) - safeareainsets.Left - safeareainsets.Right;
+                        collectionViewGrid.HeightRequest = Height - bottomBorder.Height - safeareainsets.Bottom;
 #endif
                         loadButton.Source = load;
                         nameLabel.Text = "Column 1";
@@ -318,13 +319,6 @@ namespace CollectionViewSample
                         loadButton.IsEnabled = true;
                         collectionView1.Opacity = 1;
                         firsttime = false;
-#if IOS
-                        Thickness safeareainsets = On<iOS>().SafeAreaInsets();
-                        Debug.WriteLine("Right inset: " + safeareainsets.Right.ToString());
-                        if (Width > Height)
-                            collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width) - safeareainsets.Left - safeareainsets.Right;
-                        collectionViewGrid.HeightRequest = Height - bottomBorder.Height - safeareainsets.Bottom;
-#endif
                         activityIndicator.IsRunning = false;
                     }
                 }

@@ -80,7 +80,7 @@
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <Entry Grid.Column="1" Grid.Row="1" x:Name="numberItemsEntry" Margin="10,0,10,0" HorizontalTextAlignment="End" VerticalTextAlignment="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" MaxLength="5" Keyboard="Numeric" TextChanged="NumberItems_Changed" Completed="NumberItems_Completed" Unfocused="NumberItems_Unfocused"/>
+                <Entry Grid.Column="1" Grid.Row="1" x:Name="numberItemsEntry" Margin="10,0,10,0" HorizontalTextAlignment="End" VerticalTextAlignment="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" MaxLength="6" Keyboard="Numeric" TextChanged="NumberItems_Changed" Completed="NumberItems_Completed" Unfocused="NumberItems_Unfocused"/>
                 <Label Grid.Column="0" Grid.Row="2" Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Measure all items">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
