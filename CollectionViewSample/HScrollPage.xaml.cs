@@ -8,13 +8,8 @@ namespace CollectionViewSample
 {
     public partial class HScrollPage : ContentPage
     {
-        private readonly ImageSource uparrow = ImageSource.FromFile("uparrow.png");
-        private readonly ImageSource uparrowgray = ImageSource.FromFile("uparrowgray.png");
-        private readonly ImageSource downarrow = ImageSource.FromFile("downarrow.png");
-        private readonly ImageSource downarrowgray = ImageSource.FromFile("downarrowgray.png");
-        private readonly ImageSource load = ImageSource.FromFile("download.png");
-        private readonly ImageSource loadgray = ImageSource.FromFile("downloadgray.png");
-        private readonly ImageSource time = ImageSource.FromFile("time.png");
+        private static string gotop = "\ue25a";
+        private static string gobottom = "\ue258";
         private int loadnumber = 100;
         private int reloadnumber = 5000;
         private bool firsttime = true;
@@ -27,11 +22,12 @@ namespace CollectionViewSample
             reloadnumber = 200;
 #endif            
         }
-        protected override void OnSizeAllocated(double width, double height)
+        protected async override void OnSizeAllocated(double width, double height)
         {
             //there is no need for overriding in Xamarin.Forms
             //iOS net8.0 after screen is rotated the bottom rows do not scroll into view
             base.OnSizeAllocated(width, height);
+            await Task.Delay(100);
             Thickness safeareainsets = new Thickness(0);
 #if IOS
             safeareainsets = On<iOS>().SafeAreaInsets();
@@ -50,7 +46,9 @@ namespace CollectionViewSample
                         }
                         //collectionViewGrid resizes correctly
                         //collectionView does not
-                        collectionView1.WidthRequest = cw;
+                        await Task.Delay(100);
+                        //collectionView1.WidthRequest = cw;
+                        collectionViewGrid.WidthRequest = cw;
 #else
                         //on iPhone with the nothch or dynamic island Grid inside a ScrollView is not resized corretly
                         //dimensions seem miscalcullated by safe area insets values and require correction
@@ -74,6 +72,7 @@ namespace CollectionViewSample
             collectionViewGrid.HeightRequest = height - bottomBorder.Height;
 
 #else
+            //without this correction horizontal when scrolling horizontally content may move vertically resulting in header getting cutt off partially or fully
             collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom;
 #endif
         }
@@ -146,50 +145,42 @@ namespace CollectionViewSample
         {
             if (collectionView1.ItemsSource != null)
             {
-                if (collectionView1.ItemsSource is List<CVcontent> cvcont)
+                if (collectionView1.ItemsSource is List<CVcontent> cvc)
                 {
-                    if (cvcont.Count > 0)
+                    if (cvc.Count > 0)
                     {
-                        DeviceService.PlayClickSound();
-                        upDownButton.IsEnabled = false;
-                        loadButton.IsEnabled = false;
-#if ANDROID
-                        loadButton.Source = loadgray;
-#endif
-                        collectionView1.Opacity = .5;
-                        activityIndicator.IsRunning = true;
-                        if (upDownLabel.Text == "Down")
+                        if (upDownButton.Source != null)
                         {
-#if ANDROID
-                            upDownButton.Source = downarrowgray;
-#endif
-                            await Task.Delay(100);
-                            collectionView1.ScrollTo(cvcont[^1],null, ScrollToPosition.MakeVisible, false);
-                            upDownButton.Source = uparrow;
-                            upDownLabel.Text = "Up";
-                            upDownButton.IsEnabled = true;
-                            activityIndicator.IsRunning = false;
-                            collectionView1.Opacity = 1;
-                            collectionView1.SelectedItem = cvcont[^1];
+                            if (upDownButton.Source is FontImageSource fis)
+                            {
+                                DeviceService.PlayClickSound();
+                                upDownButton.IsEnabled = false;
+                                loadButton.IsEnabled = false;
+                                collectionView1.Opacity = .5;
+                                activityIndicator.IsRunning = true;
+                                await Task.Delay(100);
+                                if (upDownLabel.Text == "Down")
+                                {
+                                    collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
+                                    await Task.Delay(100);
+                                    collectionView1.SelectedItem = cvc[^1];
+                                    fis.Glyph = gotop;
+                                    upDownLabel.Text = "Up";
+                                }
+                                else if (upDownLabel.Text == "Up")
+                                {
+                                    collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
+                                    await Task.Delay(100);
+                                    collectionView1.SelectedItem = cvc[0];
+                                    fis.Glyph = gobottom;
+                                    upDownLabel.Text = "Down";
+                                }
+                                upDownButton.IsEnabled = true;
+                                activityIndicator.IsRunning = false;
+                                collectionView1.Opacity = 1;
+                                loadButton.IsEnabled = true;
+                            }
                         }
-                        else if (upDownLabel.Text == "Up")
-                        {
-#if ANDROID
-                            upDownButton.Source = uparrowgray;
-#endif
-                            await Task.Delay(100);
-                            collectionView1.ScrollTo(cvcont[0], null, ScrollToPosition.Start, false);
-                            upDownButton.Source = downarrow;
-                            upDownLabel.Text = "Down";
-                            upDownButton.IsEnabled = true;
-                            activityIndicator.IsRunning = false;
-                            collectionView1.Opacity = 1;
-                            collectionView1.SelectedItem = cvcont[0];
-                        }
-                        loadButton.IsEnabled = true;
-#if ANDROID
-                        loadButton.Source = load; ;
-#endif
                     }
                 }
             }
@@ -207,21 +198,24 @@ namespace CollectionViewSample
                     {
                         if (collectionView1.SelectedItem is CVcontent cvc)
                         {
-                            index = cvcontent.IndexOf(cvc);
-                            if (index == 0)
+                            if (upDownButton.Source != null)
                             {
-                                upDownButton.Source = "downarrow.png";
-                                upDownLabel.Text = "Down";
-                            }
-                            else if (index == cvcontent.Count - 1)
-                            {
-                                upDownButton.Source = "uparrow.png";
-                                upDownLabel.Text = "Up";
+                                if (upDownButton.Source is FontImageSource fis)
+                                {
+                                    index = cvcontent.IndexOf(cvc);
+                                    if (index == 0)
+                                    {
+                                        fis.Glyph = gobottom;
+                                        upDownLabel.Text = "Down";
+                                    }
+                                    else if (index == cvcontent.Count - 1)
+                                    {
+                                        fis.Glyph = gotop;
+                                        upDownLabel.Text = "Up";
+                                    }
+                                }
                             }
                             upDownButton.IsEnabled = true;
-#if ANDROID
-                            loadButton.Source = load;
-#endif
                             loadButton.IsEnabled = true;
                         }
                     }
@@ -245,14 +239,8 @@ namespace CollectionViewSample
         {
             DeviceService.PlayClickSound();
             loadButton.IsEnabled = false;
-#if ANDROID
-            loadButton.Source = loadgray;
-#endif
             upDownButton.IsEnabled = false;
-#if ANDROID
-            upDownButton.Source = time;
             upDownLabel.Text = "Wait";
-#endif
             activityIndicator.IsRunning = true;
             collectionView1.Opacity = .5;
             if (firsttime)
@@ -272,56 +260,70 @@ namespace CollectionViewSample
                 loadCollectionView(loadnumber);
             }
         }
-        
+
         private async void loadCollectionView(int numberitems)
         {
             try
             {
-                if (collectionView1.ItemsSource != null)
+                //otherwise bottom buttons will appear blank until CollectionView loads.
+                await Task.Delay(100);
+                settingsBorder.IsVisible = false;
+                collectionView1.SelectedItem = null;
+                loadButton.IsEnabled = false;
+                upDownButton.IsEnabled = false;
+                upDownLabel.Text = "Wait";
+                activityIndicator.IsRunning = true;
+                await Task.Delay(100);
+                settingsBorder.IsVisible = false;
+                collectionView1.SelectedItem = null;
+                loadButton.IsEnabled = false;
+                activityIndicator.IsRunning = true;
+                await Task.Delay(100);
+                List<CVcontent> cvc = new();
+                bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
+                for (int i = 0; i < numberitems; i++)
                 {
-                    if (collectionView1.ItemsSource is List<CVcontent> _cvc)
-                    {
-                        settingsBorder.IsVisible = false;
-                        collectionView1.SelectedItem = null;
-                        loadButton.IsEnabled = false;
+                    cvc.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", ""), Occupation = Path.GetRandomFileName().Replace(".", "") });
+                }
+
+                double[] w = await ContentColumnsWidth(cvc, nameLabel.FontSize);
+                headerGrid.ColumnDefinitions[0].Width = new GridLength(w[0]);
+                headerGrid.ColumnDefinitions[1].Width = new GridLength(w[1]);
+                headerGrid.ColumnDefinitions[2].Width = new GridLength(w[2]);
+                await Task.Delay(100);
 #if ANDROID
-                        loadButton.Source = loadgray;
-                        upDownButton.Source = time;
-                        upDownLabel.Text = "Wait";
-#endif
-                        activityIndicator.IsRunning = true;
-                        await Task.Delay(500);
-                        List<CVcontent> cvc = new();
-                        bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
-                        for (int i = 0; i < numberitems; i++)
-                        {
-                            cvc.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", ""), Occupation = Path.GetRandomFileName().Replace(".", "") });
-                        }
-                        nameLabel.Text = "";
-                        double[] w = await ContentColumnsWidth(cvc,nameLabel.FontSize);
-                        headerGrid.ColumnDefinitions[0].Width = new GridLength(w[0]);
-                        headerGrid.ColumnDefinitions[1].Width = new GridLength(w[1]);
-                        headerGrid.ColumnDefinitions[2].Width = new GridLength(w[2]);
-#if ANDROID
-                        collectionView1.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width);
+//                collectionView1.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width);
+                collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width);
 #else
                         Thickness safeareainsets = On<iOS>().SafeAreaInsets();
                         collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width) - safeareainsets.Left - safeareainsets.Right;
                         collectionViewGrid.HeightRequest = Height - bottomBorder.Height - safeareainsets.Bottom;
 #endif
-                        loadButton.Source = load;
-                        nameLabel.Text = "Column 1";
-                        collectionView1.ItemsSource = cvc;
-                        collectionView1.SelectedItem = cvc[^1];
-                        collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
-                        upDownButton.Source = uparrow;
+                nameLabel.Text = "";
+                await Task.Delay(100);
+                nameLabel.Text = "Column1";
+                await Task.Delay(100);
+                collectionView1.ItemsSource = cvc;
+                await Task.Delay(200);
+                if (collectionView1.ItemsSource != null)
+                {
+                    if (collectionView1.ItemsSource is List<CVcontent> cvcontent)
+                    {
+                        collectionView1.SelectedItem = cvcontent[^1];
+                        collectionView1.ScrollTo(cvcontent[^1], null, ScrollToPosition.End, false);
+                        if (upDownButton.Source != null)
+                        {
+                            if (upDownButton.Source is FontImageSource fis)
+                                fis.Glyph = gotop;
+                        }
                         upDownLabel.Text = "Up";
                         loadButton.IsEnabled = true;
+                        upDownButton.IsEnabled = true;
                         collectionView1.Opacity = 1;
                         firsttime = false;
-                        activityIndicator.IsRunning = false;
                     }
                 }
+                activityIndicator.IsRunning = false;
             }
             catch (Exception x)
             {
