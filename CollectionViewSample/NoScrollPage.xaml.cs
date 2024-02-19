@@ -1,5 +1,7 @@
 using System.Diagnostics;
-using System.Threading.Tasks;
+using System.Text;
+//removing this line can cause inconsistent compiler errors
+using Microsoft.Maui.Platform;
 
 namespace CollectionViewSample;
 
@@ -10,6 +12,7 @@ public partial class NoScrollPage : ContentPage
     private int loadnumber = 100;
     private int reloadnumber = 5000;
     private bool firsttime = true;
+    private bool glyphcorrection = false;
     public NoScrollPage()
     {
         InitializeComponent();
@@ -19,6 +22,9 @@ public partial class NoScrollPage : ContentPage
             handler.PlatformView.Bounces = false;
         });
         //currently no similar way of disabling CollectionView bouncing
+#endif
+#if ANDROID
+        glyphCorrectionCheckBox.IsEnabled = true;
 #endif
 
 #if DEBUG
@@ -42,6 +48,10 @@ public partial class NoScrollPage : ContentPage
     }
     public async void SetAppTheme(AppTheme apptheme)
     {
+        //On Android FontImageSource images for page in view during theme change will be updated correctly but after moving to another page and back graphics will disappear
+        //font graphics on pages not in view during the theme change are not affected and will be rendered correctly when after moving to a different page and back
+        //until the glyph is changed in code behind
+        //does not happen on iOS
         await MainThread.InvokeOnMainThreadAsync(() => {
             bool islightTheme = apptheme.Equals(AppTheme.Light);
             if (collectionView1.ItemsSource != null)
@@ -59,6 +69,7 @@ public partial class NoScrollPage : ContentPage
     }
     private Task<double[]> ContentColumnsWidth(List<CVcontent> cvc, double fsize)
     {
+//        Debug.WriteLine("Font size:" + fsize.ToString());
         double w0 = ScreenMetrics.MeasureTextWidth("5555", fsize) + fsize + 10;
         double w1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + fsize;
         double w2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize;
@@ -97,6 +108,20 @@ public partial class NoScrollPage : ContentPage
             }
         }
     }
+    private string bytearray2string(byte[] b)
+    {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < b.Length; i++)
+        {
+            sb.Append(b[i].ToString("X2"));
+        }
+        return sb.ToString();
+    }
+    private string glyph2string(string glyph)
+    {
+        byte[] b = Encoding.BigEndianUnicode.GetBytes(glyph);
+        return bytearray2string(b);
+    }
     private async void UpDown_Clicked(object sender, EventArgs e)
     {
         if (collectionView1.ItemsSource != null)
@@ -105,38 +130,33 @@ public partial class NoScrollPage : ContentPage
             {
                 if (cvc.Count > 0)
                 {
-                    if (upDownButton.Source != null)
+                    DeviceService.PlayClickSound();
+                    upDownButton.IsEnabled = false;
+                    loadButton.IsEnabled = false;
+                    collectionView1.Opacity = .5;
+                    activityIndicator.IsRunning = true;
+                    Debug.WriteLine("Glyph: " + glyph2string(upDownFis.Glyph));
+                    await Task.Delay(100);
+                    if (upDownLabel.Text == "Down")
                     {
-                        if (upDownButton.Source is FontImageSource fis)
-                        {
-                            DeviceService.PlayClickSound();
-                            upDownButton.IsEnabled = false;
-                            loadButton.IsEnabled = false;
-                            collectionView1.Opacity = .5;
-                            activityIndicator.IsRunning = true;
-                            await Task.Delay(100);
-                            if (upDownLabel.Text == "Down")
-                            {
-                                collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
-                                await Task.Delay(100);
-                                collectionView1.SelectedItem = cvc[^1];
-                                fis.Glyph = gotop;
-                                upDownLabel.Text = "Up";
-                            }
-                            else if (upDownLabel.Text == "Up")
-                            {    
-                                collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
-                                await Task.Delay(100);
-                                collectionView1.SelectedItem = cvc[0];
-                                fis.Glyph = gobottom;
-                                upDownLabel.Text = "Down";
-                            }
-                            upDownButton.IsEnabled = true;
-                            activityIndicator.IsRunning = false;
-                            collectionView1.Opacity = 1;
-                            loadButton.IsEnabled = true;
-                        }
+                        collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
+                        await Task.Delay(100);
+                        collectionView1.SelectedItem = cvc[^1];
+//                        upDownFis.Glyph = gotop;
+//                        upDownLabel.Text = "Up";
                     }
+                    else if (upDownLabel.Text == "Up")
+                    {
+                        collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
+                        await Task.Delay(100);
+                        collectionView1.SelectedItem = cvc[0];
+//                        upDownFis.Glyph = gobottom;
+//                        upDownLabel.Text = "Down";
+                    }
+                    upDownButton.IsEnabled = true;
+                    activityIndicator.IsRunning = false;
+                    collectionView1.Opacity = 1;
+                    loadButton.IsEnabled = true;
                 }
             }
         }
@@ -153,22 +173,16 @@ public partial class NoScrollPage : ContentPage
                 {
                     if (collectionView1.SelectedItem is CVcontent cvc)
                     {
-                        if (upDownButton.Source != null)
+                        index = cvcontent.IndexOf(cvc);
+                        if (index == 0)
                         {
-                            if (upDownButton.Source is FontImageSource fis)
-                            {
-                                index = cvcontent.IndexOf(cvc);
-                                if (index == 0)
-                                {
-                                    fis.Glyph = gobottom;
-                                    upDownLabel.Text = "Down";
-                                }
-                                else if (index == cvcontent.Count - 1)
-                                {
-                                    fis.Glyph = gotop;
-                                    upDownLabel.Text = "Up";
-                                }
-                            }
+                            upDownFis.Glyph = gobottom;
+                            upDownLabel.Text = "Down";
+                        }
+                        else if (index == cvcontent.Count - 1)
+                        {
+                            upDownFis.Glyph = gotop;
+                            upDownLabel.Text = "Up";
                         }
                         upDownButton.IsEnabled = true;
                         loadButton.IsEnabled = true;
@@ -219,6 +233,20 @@ public partial class NoScrollPage : ContentPage
             }
             catch { }
         }
+        else
+        {
+            if (Debugger.IsAttached)
+                Debug.WriteLine("upDownFis.Color: " + upDownFis.Color.ToString());
+#if ANDROID
+            Debug.WriteLine("Glyph: " + glyph2string(upDownFis.Glyph));
+            if (glyphcorrection)
+            {
+                string glyph = upDownFis.Glyph;
+                upDownFis.Glyph = "";
+                upDownFis.Glyph = glyph;
+            }
+#endif
+        }
     }
 
     private async void loadCollectionView(int numberitems)
@@ -257,12 +285,6 @@ public partial class NoScrollPage : ContentPage
                 {
                     collectionView1.SelectedItem = cvcontent[^1];
                     collectionView1.ScrollTo(cvcontent[^1], null, ScrollToPosition.End, false);
-                    if (upDownButton.Source != null)
-                    {
-                        if (upDownButton.Source is FontImageSource fis)
-                            fis.Glyph = gotop;
-                    }
-                    upDownLabel.Text = "Up";
                     loadButton.IsEnabled = true;
                     upDownButton.IsEnabled = true;
                     collectionView1.Opacity = 1;
@@ -370,5 +392,13 @@ public partial class NoScrollPage : ContentPage
             loadCollectionView(reloadnumber);
         }
         catch { }
+    }
+
+    private void GlyphCorrectionChecked_Changed(object sender, CheckedChangedEventArgs e)
+    {
+        if (sender is CheckBox checkBox)
+        {
+            glyphcorrection = checkBox.IsChecked;
+        }
     }
 }
