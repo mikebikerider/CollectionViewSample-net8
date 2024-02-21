@@ -1,7 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-//removing this line can cause inconsistent compiler errors
-using Microsoft.Maui.Platform;
 
 namespace CollectionViewSample;
 
@@ -9,6 +7,7 @@ public partial class NoScrollPage : ContentPage
 {
     private static string gotop = "\ue25a";
     private static string gobottom = "\ue258";
+    private static string hourglass = "\uea5b";
     private int loadnumber = 100;
     private int reloadnumber = 5000;
     private bool firsttime = true;
@@ -52,19 +51,24 @@ public partial class NoScrollPage : ContentPage
         //font graphics on pages not in view during the theme change are not affected and will be rendered correctly when after moving to a different page and back
         //until the glyph is changed in code behind
         //does not happen on iOS
+
         await MainThread.InvokeOnMainThreadAsync(() => {
-            bool islightTheme = apptheme.Equals(AppTheme.Light);
-            if (collectionView1.ItemsSource != null)
+            try
             {
-                if (collectionView1.ItemsSource is List<CVcontent> cvc)
+                bool islightTheme = apptheme.Equals(AppTheme.Light);
+                if (collectionView1.ItemsSource != null)
                 {
-                    for (int i = 0; i < cvc.Count; i++)
+                    if (collectionView1.ItemsSource is List<CVcontent> cvc)
                     {
-                        cvc[i].IsLightTheme = islightTheme;
-                        cvc[i].IsSelected = cvc[i].IsSelected;
+                        for (int i = 0; i < cvc.Count; i++)
+                        {
+                            cvc[i].IsLightTheme = islightTheme;
+                            cvc[i].IsSelected = cvc[i].IsSelected;
+                        }
                     }
                 }
             }
+            catch { }
         }); 
     }
     private Task<double[]> ContentColumnsWidth(List<CVcontent> cvc, double fsize)
@@ -135,23 +139,18 @@ public partial class NoScrollPage : ContentPage
                     loadButton.IsEnabled = false;
                     collectionView1.Opacity = .5;
                     activityIndicator.IsRunning = true;
-                    Debug.WriteLine("Glyph: " + glyph2string(upDownFis.Glyph));
                     await Task.Delay(100);
                     if (upDownLabel.Text == "Down")
                     {
                         collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
                         await Task.Delay(100);
                         collectionView1.SelectedItem = cvc[^1];
-//                        upDownFis.Glyph = gotop;
-//                        upDownLabel.Text = "Up";
                     }
                     else if (upDownLabel.Text == "Up")
                     {
                         collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
                         await Task.Delay(100);
                         collectionView1.SelectedItem = cvc[0];
-//                        upDownFis.Glyph = gobottom;
-//                        upDownLabel.Text = "Down";
                     }
                     upDownButton.IsEnabled = true;
                     activityIndicator.IsRunning = false;
@@ -176,12 +175,12 @@ public partial class NoScrollPage : ContentPage
                         index = cvcontent.IndexOf(cvc);
                         if (index == 0)
                         {
-                            upDownFis.Glyph = gobottom;
+                            upDownFIS.Glyph = gobottom;
                             upDownLabel.Text = "Down";
                         }
                         else if (index == cvcontent.Count - 1)
                         {
-                            upDownFis.Glyph = gotop;
+                            upDownFIS.Glyph = gotop;
                             upDownLabel.Text = "Up";
                         }
                         upDownButton.IsEnabled = true;
@@ -207,11 +206,6 @@ public partial class NoScrollPage : ContentPage
     private void Reload_Clicked(object sender, EventArgs e)
     {
         DeviceService.PlayClickSound();
-        loadButton.IsEnabled = false;
-        upDownButton.IsEnabled = false;
-        upDownLabel.Text = "Wait";
-        activityIndicator.IsRunning = true;
-        collectionView1.Opacity = .5;
         if (firsttime)
             loadCollectionView(loadnumber);
         else
@@ -235,15 +229,32 @@ public partial class NoScrollPage : ContentPage
         }
         else
         {
-            if (Debugger.IsAttached)
-                Debug.WriteLine("upDownFis.Color: " + upDownFis.Color.ToString());
 #if ANDROID
-            Debug.WriteLine("Glyph: " + glyph2string(upDownFis.Glyph));
             if (glyphcorrection)
             {
-                string glyph = upDownFis.Glyph;
-                upDownFis.Glyph = "";
-                upDownFis.Glyph = glyph;
+                string glyph = upDownFIS.Glyph;
+                upDownFIS.Glyph = "";
+                upDownFIS.Glyph = glyph;
+
+                glyph = loadFIS.Glyph;
+                loadFIS.Glyph = "";
+                loadFIS.Glyph = glyph;
+
+                glyph = settingsFIS.Glyph;
+                settingsFIS.Glyph = "";
+                settingsFIS.Glyph = glyph;
+
+                glyph = navbarFIS.Glyph;
+                navbarFIS.Glyph = "";
+                navbarFIS.Glyph = glyph;
+
+                glyph = cancelFIS.Glyph;
+                cancelFIS.Glyph = "";
+                cancelFIS.Glyph = glyph;
+
+                glyph = goFIS.Glyph;
+                goFIS.Glyph = "";
+                goFIS.Glyph = glyph;
             }
 #endif
         }
@@ -253,13 +264,14 @@ public partial class NoScrollPage : ContentPage
     {
         try
         {
-            //otherwise bottom buttons will appear blank until CollectionView loads.
-            await Task.Delay(100);
             settingsBorder.IsVisible = false;
             collectionView1.SelectedItem = null;
+            upDownFIS.Glyph = hourglass;
             loadButton.IsEnabled = false;
+            goButton.IsEnabled = false;
             upDownButton.IsEnabled = false;
             upDownLabel.Text = "Wait";
+            collectionView1.Opacity = .5;
             activityIndicator.IsRunning = true;
             await Task.Delay(100);
             List<CVcontent> cvc = new List<CVcontent>();
@@ -283,10 +295,12 @@ public partial class NoScrollPage : ContentPage
             {
                 if (collectionView1.ItemsSource is List<CVcontent> cvcontent)
                 {
+                    //this line trigggers SelectionChanged event that will change the upDownIFS glyph and the button appearance 
                     collectionView1.SelectedItem = cvcontent[^1];
                     collectionView1.ScrollTo(cvcontent[^1], null, ScrollToPosition.End, false);
                     loadButton.IsEnabled = true;
                     upDownButton.IsEnabled = true;
+                    goButton.IsEnabled = true;
                     collectionView1.Opacity = 1;
                     firsttime = false;
                 }
@@ -330,14 +344,9 @@ public partial class NoScrollPage : ContentPage
 
     private void ShowNavigationBarChecked_Changed(object sender, CheckedChangedEventArgs e)
     {
-        //this event handler can be triggered by setting IsChecked = true in XAML is after Checked_Changed
-        //only in DEBUG mode. Was very confusing - would crash when compiled in DEBUG regardless of HotReload or launched by VS or outside VS, but run fine in Release
-        //must be .NET 8.0 XAML order of things 'Enhancement'
         try
         {
             DeviceService.PlayClickSound();
-            goButton.IsVisible = !navBarCheckBox.IsChecked;
-            goLabel.IsVisible = !navBarCheckBox.IsChecked;
             settingsBorder.IsVisible = false;
             Shell.SetNavBarIsVisible(this, navBarCheckBox.IsChecked);
         }
