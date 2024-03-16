@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace CollectionViewSample
 {
     public class CVcontent : INotifyPropertyChanged
     {
-        public event PropertyChangedEventHandler? PropertyChanged = delegate { };
+        //public event PropertyChangedEventHandler? PropertyChanged = delegate { };
+        public event PropertyChangedEventHandler? PropertyChanged;
         private bool isSelected = false;
         private double w;
 
@@ -18,14 +20,20 @@ namespace CollectionViewSample
         public string Occupation { get; set; } = string.Empty;
         public bool IsLightTheme { get; set; } = true;
 
+
+        private void OnPropertyChanged([CallerMemberName] string name = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
         public bool IsSelected
         {
             get { return isSelected; }
             set
             {
                 isSelected = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(textcolor)));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(color)));
+                OnPropertyChanged(nameof(textcolor));
+                OnPropertyChanged(nameof(color));
             }
         }
         public Color color
@@ -75,7 +83,9 @@ namespace CollectionViewSample
             set
             {
                 w = value;
-                PropertyChanged?.Invoke(this,new PropertyChangedEventArgs(nameof(W)));
+#if ANDROID
+                OnPropertyChanged(nameof(W));
+#endif
             }
         }
         public double Cw0 { get; set; }
@@ -99,6 +109,7 @@ namespace CollectionViewSample
         {
             get { return new GridLength(Cw2, GridUnitType.Absolute); }
         }
+        /*
         public GridLength W3
         {
             get { return new GridLength(Cw3, GridUnitType.Absolute); }
@@ -106,6 +117,37 @@ namespace CollectionViewSample
         public GridLength H
         {
             get { return new GridLength(Rh, GridUnitType.Absolute); }
+        }
+        */
+    }
+    public class NoHSContentViewModel
+    {
+        public IList<CVcontent>  CvContent { get; set; }
+        public int NumberItems { get; set; } = 500;
+
+        public NoHSContentViewModel()
+        {
+            CvContent = new List<CVcontent>();
+            bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
+            for (int i = 0; i < NumberItems; i++)
+            {
+                CvContent.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", "") });
+            }
+        }
+    }
+    public class HSContentViewModel
+    {
+        public IList<CVcontent> CvContent { get; set; }
+        public int NumberItems { get; set; } = 50;
+
+        public HSContentViewModel()
+        {
+            CvContent = new List<CVcontent>();
+            bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
+            for (int i = 0; i < NumberItems; i++)
+            {
+                CvContent.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", ""), Occupation = Path.GetRandomFileName().Replace(".", "") });
+            }
         }
     }
 }

@@ -58,5 +58,29 @@ namespace CollectionViewSample
                 return 1f;
             }
         }
+        public static double ScreenWidth
+        {
+            get
+            {
+                Context context = Platform.AppContext;
+                DisplayMetrics? displayMetrics = context.Resources?.DisplayMetrics;
+                if (displayMetrics != null)
+                    return displayMetrics.WidthPixels / displayMetrics.Density;
+                else 
+                    return 0f;
+            }
+        }
+        public static double ScreenHeight
+        {
+            get
+            {
+                Context context = Platform.AppContext;
+                DisplayMetrics? displayMetrics = context.Resources?.DisplayMetrics;
+                if (displayMetrics != null)
+                    return displayMetrics.HeightPixels / displayMetrics.Density;
+                else
+                    return 0f;
+            }
+        }
     }
 }

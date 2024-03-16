@@ -27,7 +27,7 @@ namespace CollectionViewSample
         }
         public static double MeasureTextWidth(string text, double fontSize)
         {
-           var nsText = new NSString(text);
+            var nsText = new NSString(text);
 
             var boundSize = new SizeF(float.PositiveInfinity, float.PositiveInfinity);
 
@@ -45,6 +45,13 @@ namespace CollectionViewSample
 
             return (double)sizeF.Width;
         }
-
+        public static double ScreenWidth()
+        {
+            return UIScreen.MainScreen.Bounds.Width;
+        }
+        public static double ScreenHeight()
+        {
+            return UIScreen.MainScreen.Bounds.Height;
+        }
     }
 }

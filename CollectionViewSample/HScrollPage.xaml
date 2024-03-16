@@ -5,9 +5,12 @@
              x:Class="CollectionViewSample.HScrollPage"
              HideSoftInputOnTapped="True"
              Appearing="Page_Appearing">
+    <ContentPage.BindingContext>
+        <local:CVPageViewModel/>
+    </ContentPage.BindingContext>
     <Shell.TitleView>
-        <Grid ColumnDefinitions="auto,*" RowDefinitions="auto">
-            <ImageButton Grid.Column="0" x:Name="navbarButton" HorizontalOptions="Start" VerticalOptions="Center" Clicked="GoButton_Clicked">
+        <Grid x:Name="titleGrid" ColumnDefinitions="auto,*" RowDefinitions="auto">
+            <ImageButton Grid.Column="0" x:Name="navbarButton" HorizontalOptions="Start" VerticalOptions="Center" Clicked="GoButton_Clicked" IsEnabled="{Binding ButtonEnabled}">
                 <ImageButton.Source>
                     <FontImageSource x:Name="navbarFIS" FontFamily="MaterialIconsOutlined-Regular" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="&#xe5e0;"/>
                 </ImageButton.Source>
@@ -17,22 +20,31 @@
     </Shell.TitleView>
     <Grid x:Name="mainGrid" BackgroundColor="{AppThemeBinding Light=White, Dark=Black}" ColumnDefinitions="*" RowDefinitions="*,auto">
         <ScrollView x:Name="hscroller" Grid.Row="0" Orientation="Horizontal" VerticalScrollBarVisibility="Never">
-            <Grid x:Name="collectionViewGrid" ColumnDefinitions="*" RowDefinitions="40,*">
-                <Grid x:Name="headerGrid" Grid.Row="0" ColumnDefinitions="70,190,190,*" RowDefinitions="40" BackgroundColor="{AppThemeBinding Light=Black, Dark=White}">
+            <Grid x:Name="collectionViewGrid" ColumnDefinitions="*" RowDefinitions="auto,*">
+                <Grid x:Name="headerGrid" Grid.Row="0" BackgroundColor="{AppThemeBinding Light=Black, Dark=White}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="{Binding W0}"/>
+                        <ColumnDefinition Width="{Binding W1}"/>
+                        <ColumnDefinition Width="{Binding W2}"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                    </Grid.RowDefinitions>
                     <Border Grid.Column="0" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness=".5" BackgroundColor="{AppThemeBinding Light=CornSilk, Dark=SlateGray}">
-                        <Label HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="#" LineBreakMode="NoWrap"/>
+                        <Label Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="#" LineBreakMode="NoWrap"/>
                     </Border>
                     <Border Grid.Column="1" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness=".5" BackgroundColor="{AppThemeBinding Light=CornSilk, Dark=SlateGray}">
-                        <Label x:Name="nameLabel" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 1" LineBreakMode="NoWrap"/>
+                        <Label x:Name="nameLabel" Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 1" LineBreakMode="NoWrap"/>
                     </Border>
                     <Border Grid.Column="2" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness=".5" BackgroundColor="{AppThemeBinding Light=CornSilk, Dark=SlateGray}">
-                        <Label HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 2" LineBreakMode="NoWrap"/>
+                        <Label Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 2" LineBreakMode="NoWrap"/>
                     </Border>
                     <Border Grid.Column="3" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness=".5" BackgroundColor="{AppThemeBinding Light=CornSilk, Dark=SlateGray}">
-                        <Label HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 3" LineBreakMode="NoWrap"/>
+                        <Label Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 3" LineBreakMode="NoWrap"/>
                     </Border>
                 </Grid>
-                <CollectionView x:Name="collectionView1" Grid.Row="1" SelectionMode="Single" ItemsLayout="VerticalList" IsGrouped="False" SelectionChanged="CollectionView1_SelectionChanged">
+                <CollectionView x:Name="collectionView1" Grid.Row="1" SelectionMode="Single" ItemsLayout="VerticalList" ItemsSource="{Binding Cvc}" IsGrouped="False" Opacity="{Binding CVopacity}" SelectionChanged="CollectionView1_SelectionChanged" Scrolled="CollectionView_Scrolled">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="local:CVcontent">
                             <Grid BackgroundColor="{Binding textcolor}" WidthRequest="{Binding W}">
@@ -79,7 +91,7 @@
                 </CollectionView>
             </Grid>
         </ScrollView>
-        <ActivityIndicator Grid.Row="0" x:Name="activityIndicator" HorizontalOptions="Center" VerticalOptions="Center" Color="{AppThemeBinding Light=Black, Dark=White}" IsRunning="False"/>
+        <ActivityIndicator Grid.Row="0" x:Name="activityIndicator" HorizontalOptions="Center" VerticalOptions="Center" Color="{AppThemeBinding Light=Black, Dark=White}" IsRunning="{Binding IsBusy}"/>
         <Border Grid.Row="0" x:Name="settingsBorder" Margin="0,70,0,0" VerticalOptions="Start" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness="2" BackgroundColor="{AppThemeBinding Light=White, Dark=#414A4C}" IsVisible="False">
             <Grid ColumnSpacing="10" RowSpacing="10" ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto,auto,auto">
                 <Label Grid.Column="0" Grid.Row="0" Margin="10,0,0,0" HorizontalTextAlignment="Start" VerticalTextAlignment="Center" FontSize="Medium" Text="Settings"/>
@@ -105,7 +117,7 @@
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <CheckBox Grid.Column="1" Grid.Row="3" x:Name="navBarCheckBox" HorizontalOptions="Center" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="True" CheckedChanged="ShowNavigationBarChecked_Changed"/>
+                <CheckBox Grid.Column="1" Grid.Row="3" x:Name="navBarCheckBox" HorizontalOptions="Center" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="true" CheckedChanged="ShowNavigationBarChecked_Changed"/>
                 <Label Grid.Column="0" Grid.Row="4" Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Android glyph correction">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
@@ -118,35 +130,32 @@
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="0,0,20,20"/>
             </Border.StrokeShape>
-            <ScrollView  Orientation="Horizontal">
-                <Grid x:Name="bottomGrid" ColumnDefinitions="auto,.5*,.5*,auto" RowDefinitions="auto,auto">
-                    <ImageButton Grid.Column="0" Grid.Row="0" Margin="15,5,0,0" x:Name="goButton" Clicked="GoButton_Clicked">
-                        <ImageButton.Source>
-                            <FontImageSource x:Name="goFIS" FontFamily="MaterialIconsOutlined-Regular" Size="48" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="&#xe5e0;"/>
-                        </ImageButton.Source>
-                    </ImageButton>
-                    <Label Grid.Column="0" Grid.Row="1" x:Name="goLabel" Margin="15,0,0,3" HorizontalOptions="Center" FontSize="Small" FontAutoScalingEnabled="False" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Previouis"/>
-                    <ImageButton Grid.Column="1" Grid.Row="0" x:Name="loadButton" Margin="0,5,0,0" Clicked="Reload_Clicked">
-                        <ImageButton.Source>
-                            <FontImageSource x:Name="loadFIS" FontFamily="MaterialIconsOutlined-Regular" Size="48" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="&#xe5d5;"/>
-                        </ImageButton.Source>
-                    </ImageButton>
-                    <Label Grid.Column="1" Grid.Row="1" x:Name="loadLabel" Margin="0,0,0,3" HorizontalOptions="Center" FontSize="Small" FontAutoScalingEnabled="False" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Reload"/>
-                    <ImageButton Grid.Column="2" Grid.Row="0" Margin="0,5,0,0" HorizontalOptions="Center" VerticalOptions="Center" BackgroundColor="Transparent" Clicked="SettingsButton_Clicked">
-                        <ImageButton.Source>
-                            <FontImageSource x:Name="settingsFIS" FontFamily="MaterialIconsOutlined-Regular" Size="48" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="&#xe8b8;"/>
-                        </ImageButton.Source>
-                    </ImageButton>
-                    <Label Grid.Column="2" Grid.Row="1" x:Name="settingsLabel" Margin="0,0,0,3" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Small" FontAutoScalingEnabled="False" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Settings"/>
-                    <ImageButton Grid.Column="3" Grid.Row="0" x:Name="upDownButton" Margin="0,5,15,0" HorizontalOptions="Center" IsEnabled="False" Clicked="UpDown_Clicked">
-                        <ImageButton.Source>
-                            <FontImageSource x:Name="upDownFIS" FontFamily="MaterialIconsOutlined-Regular" Size="48" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="&#xe258;"/>
-                        </ImageButton.Source>
-                    </ImageButton>
-                    <Label Grid.Column="3" Grid.Row="1" x:Name="upDownLabel" Margin="0,0,15,3" HorizontalOptions="Center" FontSize="Small" FontAutoScalingEnabled="False" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Down"/>
-                </Grid>
-            </ScrollView>
-         </Border>
+            <Grid x:Name="bottomGrid" ColumnDefinitions="auto,50*,50*,auto" RowDefinitions="auto,auto">
+                <ImageButton Grid.Column="0" Grid.Row="0" Margin="15,3,0,0" x:Name="goButton" Clicked="GoButton_Clicked" IsEnabled="{Binding ButtonEnabled}">
+                    <ImageButton.Source>
+                        <FontImageSource x:Name="goFIS" FontFamily="MaterialIconsOutlined-Regular" Size="40" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="&#xe5e0;"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="0" Grid.Row="1" x:Name="goLabel" Margin="15,0,0,3" HorizontalOptions="Center" FontSize="Small" FontAutoScalingEnabled="False" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Previouis"/>
+                <ImageButton Grid.Column="1" Grid.Row="0" x:Name="loadButton" Margin="0,3,0,0" Clicked="Reload_Clicked" IsEnabled="{Binding ButtonEnabled}">
+                    <ImageButton.Source>
+                        <FontImageSource x:Name="loadFIS" FontFamily="MaterialIconsOutlined-Regular" Size="40" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="&#xe5d5;"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="1" Grid.Row="1" x:Name="loadLabel" Margin="0,0,0,3" HorizontalOptions="Center" FontSize="Small" FontAutoScalingEnabled="False" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Reload"/>
+                <ImageButton Grid.Column="2" Grid.Row="0" Margin="0,3,0,0" HorizontalOptions="Center" VerticalOptions="Center" Clicked="SettingsButton_Clicked" IsEnabled="{Binding ButtonEnabled}">
+                    <ImageButton.Source>
+                        <FontImageSource x:Name="settingsFIS" FontFamily="MaterialIconsOutlined-Regular" Size="40" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="&#xe8b8;"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="2" Grid.Row="1" x:Name="settingsLabel" Margin="0,0,0,3" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Small" FontAutoScalingEnabled="False" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Settings"/>
+                <ImageButton Grid.Column="3" Grid.Row="0" x:Name="upDownButton" Margin="0,3,15,0" HorizontalOptions="Center" Clicked="UpDown_Clicked" IsEnabled="{Binding ButtonEnabled}">
+                    <ImageButton.Source>
+                        <FontImageSource x:Name="upDownFIS" FontFamily="MaterialIconsOutlined-Regular" Size="40" Color="{AppThemeBinding Light=Black, Dark=White}" Glyph="{Binding UpDownGlyph}"/>
+                    </ImageButton.Source>
+                </ImageButton>
+                <Label Grid.Column="3" Grid.Row="1" x:Name="upDownLabel" Margin="0,0,15,3" HorizontalOptions="Center" FontSize="Small" FontAutoScalingEnabled="False" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="{Binding UpDownText}"/>
+            </Grid>
+        </Border>
     </Grid>
-
 </ContentPage>

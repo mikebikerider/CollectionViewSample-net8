@@ -1,5 +1,6 @@
+using Microsoft.Maui.Controls.PlatformConfiguration;
+using Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;
 using System.Diagnostics;
-using System.Text;
 
 namespace CollectionViewSample;
 
@@ -8,13 +9,24 @@ public partial class NoScrollPage : ContentPage
     private static string gotop = "\ue25a";
     private static string gobottom = "\ue258";
     private static string hourglass = "\uea5b";
-    private int loadnumber = 100;
+    private int loadnumber = 200;
     private int reloadnumber = 5000;
     private bool firsttime = true;
+    private CVPageViewModel? vmodel;
     private bool glyphcorrection = false;
+    private Thickness safeareainsets = new Thickness(0);
     public NoScrollPage()
     {
         InitializeComponent();
+        vmodel = BindingContext as CVPageViewModel;
+        if (vmodel != null)
+        {
+            double fsize = nameLabel.FontSize;
+            vmodel.Cw0 = ScreenMetrics.MeasureTextWidth("5555", fsize) + fsize + 10;
+            vmodel.Cw1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + fsize + 10;
+            vmodel.Cw2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize + 10;
+        }
+
 #if IOS
         Microsoft.Maui.Handlers.ScrollViewHandler.Mapper.AppendToMapping("Disable_Bounce", (handler, view) =>
         {
@@ -24,66 +36,69 @@ public partial class NoScrollPage : ContentPage
 #endif
 #if ANDROID
         glyphCorrectionCheckBox.IsEnabled = true;
+        glyphCorrectionCheckBox.IsChecked = false;
 #endif
 
 #if DEBUG
-        loadnumber = 50;
+        loadnumber = 100;
         reloadnumber = 200;
-#endif        
+#endif
     }
-    protected override void OnSizeAllocated(double width, double height)
+    protected override async void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
+        await Task.Delay(100);
 
 #if ANDROID
-        //the need for this code in MAUI is an embarassment
-        //in a real app the minimum bottomBar width is calculated and WidthRequest be the bigger of width and calculated width
-        //no need for that in Xamarin.Forms and MAUI iOS
-        bottomGrid.WidthRequest = width;
+        collectionViewGrid.HeightRequest = height - bottomBorder.Height;
 #else
         //the above line is not needed under iOS, however if issued in an app running on iPhone with the notch or dynamic island
         //then the bottomGrid will ber resized to size larger than width by the sum of the left and right inset
+        safeareainsets = On<iOS>().SafeAreaInsets();
+        collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
 #endif
+        if (Debugger.IsAttached)
+            Debug.WriteLine("Height allocated: " + height.ToString());
     }
-    public async void SetAppTheme(AppTheme apptheme)
+    public void SetAppTheme(AppTheme apptheme)
     {
         //On Android FontImageSource images for page in view during theme change will be updated correctly but after moving to another page and back graphics will disappear
         //font graphics on pages not in view during the theme change are not affected and will be rendered correctly when after moving to a different page and back
         //until the glyph is changed in code behind
         //does not happen on iOS
 
-        await MainThread.InvokeOnMainThreadAsync(() => {
-            try
+        try
+        {
+            if (vmodel != null)
             {
-                bool islightTheme = apptheme.Equals(AppTheme.Light);
-                if (collectionView1.ItemsSource != null)
+                if (vmodel.Cvc is List<CVcontent> cvc)
                 {
-                    if (collectionView1.ItemsSource is List<CVcontent> cvc)
+                    if (cvc.Count > 0)
                     {
-                        for (int i = 0; i < cvc.Count; i++)
+                        bool islightTheme = apptheme.Equals(AppTheme.Light);
+                        for (int i = 0; i < vmodel.Cvc.Count; i++)
                         {
-                            cvc[i].IsLightTheme = islightTheme;
+                            vmodel.Cvc[i].IsLightTheme = islightTheme;
                             cvc[i].IsSelected = cvc[i].IsSelected;
                         }
                     }
                 }
             }
-            catch { }
-        }); 
+        }
+        catch { }
     }
     private Task<double[]> ContentColumnsWidth(List<CVcontent> cvc, double fsize)
     {
-//        Debug.WriteLine("Font size:" + fsize.ToString());
-        double w0 = ScreenMetrics.MeasureTextWidth("5555", fsize) + fsize + 10;
-        double w1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + fsize;
-        double w2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize;
+        double w0 = ScreenMetrics.MeasureTextWidth("55555", fsize) + 10;
+        double w1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + 10;
+        double w2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + 10;
         for (int i = 0; i < cvc.Count; i++)
         {
-            w0 = Math.Max(w0, ScreenMetrics.MeasureTextWidth(cvc[i].ItemNo, fsize) + fsize + 10); //right margin 10
-            w1 = Math.Max(w1, ScreenMetrics.MeasureTextWidth(cvc[i].FirstName, fsize) + fsize);
-            w2 = Math.Max(w2, ScreenMetrics.MeasureTextWidth(cvc[i].LastName, fsize) + fsize);
+            w0 = Math.Max(w0, ScreenMetrics.MeasureTextWidth(cvc[i].ItemNo, fsize) + 10); //right margin 10
+            w1 = Math.Max(w1, ScreenMetrics.MeasureTextWidth(cvc[i].FirstName, fsize) + 10);
+            w2 = Math.Max(w2, ScreenMetrics.MeasureTextWidth(cvc[i].LastName, fsize) + 10);
         }
-        double cw = Math.Max(Width, w0 + w1 + w2);
+   //     double cw = Math.Max(Width, w0 + w1 + w2);
         for (int i = 0; i < cvc.Count; i++)
         {
             cvc[i].Cw0 = w0;
@@ -97,21 +112,16 @@ public partial class NoScrollPage : ContentPage
     {
         if (settingsBorder.IsVisible)
             settingsBorder.IsVisible = false;
-        if (collectionView1.ItemsSource != null)
+        if (sender is Label l)
         {
-            if (collectionView1.ItemsSource is List<CVcontent>)
+            if (l.BindingContext != null)
             {
-                if (sender is Label l)
-                {
-                    if (l.BindingContext != null)
-                    {
-                        if (l.BindingContext is CVcontent cvc)
-                            collectionView1.SelectedItem = cvc;
-                    }
-                }
+                if (l.BindingContext is CVcontent cvc)
+                    collectionView1.SelectedItem = cvc;
             }
         }
     }
+    /*
     private string bytearray2string(byte[] b)
     {
         StringBuilder sb = new StringBuilder();
@@ -126,36 +136,39 @@ public partial class NoScrollPage : ContentPage
         byte[] b = Encoding.BigEndianUnicode.GetBytes(glyph);
         return bytearray2string(b);
     }
+    */
     private async void UpDown_Clicked(object sender, EventArgs e)
     {
-        if (collectionView1.ItemsSource != null)
+        if (vmodel != null)
         {
-            if (collectionView1.ItemsSource is List<CVcontent> cvc)
+            if (vmodel.Cvc != null)
             {
-                if (cvc.Count > 0)
+                if (vmodel.Cvc is List<CVcontent> cvc)
                 {
-                    DeviceService.PlayClickSound();
-                    upDownButton.IsEnabled = false;
-                    loadButton.IsEnabled = false;
-                    collectionView1.Opacity = .5;
-                    activityIndicator.IsRunning = true;
-                    await Task.Delay(100);
-                    if (upDownLabel.Text == "Down")
+                    if (cvc.Count > 0)
                     {
-                        collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
-                        await Task.Delay(100);
-                        collectionView1.SelectedItem = cvc[^1];
+                        DeviceService.PlayClickSound();
+                        if (vmodel != null)
+                        {
+                            vmodel.IsBusy = true;
+                            await Task.Delay(100);
+                            if (vmodel.UpDownText == "Bottom")
+                            {
+                                collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
+                                collectionView1.SelectedItem = cvc[^1];
+                                vmodel.UpDownText = "Top";
+                                vmodel.UpDownGlyph = gotop;
+                            }
+                            else if (vmodel.UpDownText == "Top")
+                            {
+                                collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
+                                collectionView1.SelectedItem = cvc[0];
+                                vmodel.UpDownText = "Bottom";
+                                vmodel.UpDownGlyph = gobottom;
+                            }
+                            vmodel.IsBusy = false;
+                        }
                     }
-                    else if (upDownLabel.Text == "Up")
-                    {
-                        collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
-                        await Task.Delay(100);
-                        collectionView1.SelectedItem = cvc[0];
-                    }
-                    upDownButton.IsEnabled = true;
-                    activityIndicator.IsRunning = false;
-                    collectionView1.Opacity = 1;
-                    loadButton.IsEnabled = true;
                 }
             }
         }
@@ -163,40 +176,37 @@ public partial class NoScrollPage : ContentPage
 
     private void CollectionView1_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (collectionView1.ItemsSource != null)
+        int index = -1;
+        if (vmodel != null)
         {
-            if (collectionView1.ItemsSource is List<CVcontent> cvcontent)
+            List<CVcontent> cvcontent = vmodel.Cvc;
+            if (collectionView1.SelectedItem != null)
             {
-                int index = -1;
-                if (collectionView1.SelectedItem != null)
+                if (collectionView1.SelectedItem is CVcontent cvc)
                 {
-                    if (collectionView1.SelectedItem is CVcontent cvc)
+                    index = vmodel.Cvc.IndexOf(cvc);
+
+                    if (index == 0)
                     {
-                        index = cvcontent.IndexOf(cvc);
-                        if (index == 0)
-                        {
-                            upDownFIS.Glyph = gobottom;
-                            upDownLabel.Text = "Down";
-                        }
-                        else if (index == cvcontent.Count - 1)
-                        {
-                            upDownFIS.Glyph = gotop;
-                            upDownLabel.Text = "Up";
-                        }
-                        upDownButton.IsEnabled = true;
-                        loadButton.IsEnabled = true;
+                        vmodel.UpDownGlyph = gobottom;
+                        vmodel.UpDownText = "Bottom";
+                    }
+                    else if (index == cvcontent.Count - 1)
+                    {
+                        vmodel.UpDownGlyph = gotop;
+                        vmodel.UpDownText = "Top";
                     }
                 }
-                for (int i = 0; i < cvcontent.Count; i++)
+            }
+            for (int i = 0; i < cvcontent.Count; i++)
+            {
+                if (i == index)
+                    cvcontent[i].IsSelected = true;
+                else
                 {
-                    if (i == index)
-                        cvcontent[i].IsSelected = true;
-                    else
+                    if (cvcontent[i].IsSelected)
                     {
-                        if (cvcontent[i].IsSelected)
-                        {
-                            cvcontent[i].IsSelected = false;
-                        }
+                        cvcontent[i].IsSelected = false;
                     }
                 }
             }
@@ -219,7 +229,6 @@ public partial class NoScrollPage : ContentPage
         {
             try
             {
-                collectionView1.ItemsSource = new List<CVcontent>();
                 double fsize = numberItemsEntry.FontSize;
                 numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("555555", fsize) + fsize + 10;
                 numberItemsEntry.Text = reloadnumber.ToString();
@@ -227,37 +236,20 @@ public partial class NoScrollPage : ContentPage
             }
             catch { }
         }
+
         else
         {
 #if ANDROID
             if (glyphcorrection)
             {
-                string glyph = upDownFIS.Glyph;
-                upDownFIS.Glyph = "";
-                upDownFIS.Glyph = glyph;
-
-                glyph = loadFIS.Glyph;
-                loadFIS.Glyph = "";
-                loadFIS.Glyph = glyph;
-
-                glyph = settingsFIS.Glyph;
-                settingsFIS.Glyph = "";
-                settingsFIS.Glyph = glyph;
-
-                glyph = navbarFIS.Glyph;
-                navbarFIS.Glyph = "";
-                navbarFIS.Glyph = glyph;
-
-                glyph = cancelFIS.Glyph;
-                cancelFIS.Glyph = "";
-                cancelFIS.Glyph = glyph;
-
-                glyph = goFIS.Glyph;
-                goFIS.Glyph = "";
-                goFIS.Glyph = glyph;
+                if (vmodel != null)
+                {
+                    vmodel.UpdateUpDownGlyph();
+                }
             }
 #endif
         }
+
     }
 
     private async void loadCollectionView(int numberitems)
@@ -266,46 +258,35 @@ public partial class NoScrollPage : ContentPage
         {
             settingsBorder.IsVisible = false;
             collectionView1.SelectedItem = null;
-            upDownFIS.Glyph = hourglass;
-            loadButton.IsEnabled = false;
-            goButton.IsEnabled = false;
-            upDownButton.IsEnabled = false;
-            upDownLabel.Text = "Wait";
-            collectionView1.Opacity = .5;
-            activityIndicator.IsRunning = true;
-            await Task.Delay(100);
-            List<CVcontent> cvc = new List<CVcontent>();
-            bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
-            for (int i = 0; i < numberitems; i++)
+            if (vmodel != null)
             {
-                cvc.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", "") });
+
+                        vmodel.IsBusy = true;
+                        vmodel.UpDownGlyph = hourglass;
+                        vmodel.UpDownText = "Wait";
+                        await Task.Delay(100);
+                        bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
+                        List<CVcontent> cvl = new List<CVcontent>();
+                        for (int i = 0; i < numberitems; i++)
+                        {
+                            cvl.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", "") });
+                        }
+                        double[] w = await ContentColumnsWidth(cvl, nameLabel.FontSize);
+                        vmodel.Cw0 = w[0];
+                        vmodel.Cw1 = w[1];
+                        vmodel.Cvc = cvl;
+                        List<CVcontent> cvc = vmodel.Cvc;
+#if iOS
+                        collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2], Width) - safeareainsets.Left - safeareainsets.Right;
+                        collectionViewGrid.HeightRequest = Height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
+#endif
+                        await Task.Delay(100);
+                        //this line trigggers SelectionChanged event that will change the upDownIFS glyph and the button appearance 
+                        collectionView1.SelectedItem = cvc[0];
+                        collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
+                        firsttime = false;
+                        vmodel.IsBusy = false;
             }
-            double[] w = await ContentColumnsWidth(cvc,nameLabel.FontSize);
-            nameLabel.Text = "";
-            headerGrid.ColumnDefinitions[0].Width = new GridLength(w[0]);
-            headerGrid.ColumnDefinitions[1].Width = new GridLength(w[1]);
-            await Task.Delay(100);
-            //dumb trick to force header repaint after column definitions changed
-            //is not required in Xamarin.Forms
-            nameLabel.Text = "Column 1";
-            await Task.Delay(100);
-            collectionView1.ItemsSource = cvc;
-            await Task.Delay(100);
-            if (collectionView1.ItemsSource != null)
-            {
-                if (collectionView1.ItemsSource is List<CVcontent> cvcontent)
-                {
-                    //this line trigggers SelectionChanged event that will change the upDownIFS glyph and the button appearance 
-                    collectionView1.SelectedItem = cvcontent[^1];
-                    collectionView1.ScrollTo(cvcontent[^1], null, ScrollToPosition.End, false);
-                    loadButton.IsEnabled = true;
-                    upDownButton.IsEnabled = true;
-                    goButton.IsEnabled = true;
-                    collectionView1.Opacity = 1;
-                    firsttime = false;
-                }
-            }
-            activityIndicator.IsRunning = false;
         }
         catch (Exception x)
         {
