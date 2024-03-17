@@ -97,19 +97,19 @@
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <CheckBox Grid.Column="1" Grid.Row="2" Margin="10,0,10,0" HorizontalOptions="Center" VerticalOptions="Center" Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="True" CheckedChanged="MeasureItems_CheckedChanged"/>
+                <CheckBox Grid.Column="1" Grid.Row="2" Margin="0,0,10,0" HorizontalOptions="End" VerticalOptions="Center" Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="True" CheckedChanged="MeasureItems_CheckedChanged"/>
                 <Label Grid.Column="0" Grid.Row="3" Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Show navigation bar">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <CheckBox Grid.Column="1" Grid.Row="3" x:Name="navBarCheckBox" HorizontalOptions="Center" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="True" CheckedChanged="ShowNavigationBarChecked_Changed" />
+                <CheckBox Grid.Column="1" Grid.Row="3" x:Name="navBarCheckBox" Margin="0,0,10,0" HorizontalOptions="End" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="True" CheckedChanged="ShowNavigationBarChecked_Changed" />
                 <Label Grid.Column="0" Grid.Row="4" Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Android glyph correction">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <CheckBox Grid.Column="1" Grid.Row="4" x:Name="glyphCorrectionCheckBox" HorizontalOptions="Center" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" CheckedChanged="GlyphCorrectionChecked_Changed" IsEnabled="False"/>
+                <CheckBox Grid.Column="1" Grid.Row="4" x:Name="glyphCorrectionCheckBox" Margin="0,0,10,0" HorizontalOptions="End" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" CheckedChanged="GlyphCorrectionChecked_Changed"/>
             </Grid>
         </Border>
         <Border Grid.Row="1" x:Name="bottomBorder" Stroke="{AppThemeBinding Light=Blue, Dark=White}" StrokeThickness="2" BackgroundColor="{AppThemeBinding Light=White, Dark=#414A4C}">

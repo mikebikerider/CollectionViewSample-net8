@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace CollectionViewSample
 {
@@ -7,14 +8,10 @@ namespace CollectionViewSample
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-//        private static string gotop = "\ue25a";
-        private static string gobottom = "\ue258";
-//        private static string hourglass = "\uea5b";
-
         private bool isBusy = false;
         private bool buttonEnabled = true;
         private string updownText = "Bottom";
-        private string updownGlyph = gobottom;
+        private string updownGlyph = "\ue258";
         private double cvopacity = 1;
         private double w = 0;
         private double w0 = 0;
@@ -26,6 +23,7 @@ namespace CollectionViewSample
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+
         public List<CVcontent> Cvc
         {
             get { return cvc; }
@@ -49,7 +47,7 @@ namespace CollectionViewSample
                 OnPropertyChanged(nameof(W));
             }
         }
-        public double Cw0 
+        public double Cw0
         {
             get { return w0; }
             set
@@ -67,9 +65,9 @@ namespace CollectionViewSample
                 OnPropertyChanged(nameof(W1));
             }
         }
-        public double Cw2 
-        { 
-            get { return w2; } 
+        public double Cw2
+        {
+            get { return w2; }
             set
             {
                 w2 = value;
@@ -124,16 +122,27 @@ namespace CollectionViewSample
         public string UpDownText
         {
             get { return updownText; }
-            set 
+            set
             {
                 updownText = value;
                 OnPropertyChanged(nameof(UpDownText));
             }
         }
+        public bool GlyphCorrection
+        {
+            get
+            {
+#if IOS
+                return false;
+#else
+                return Preferences.Get("AndroidGlyphCorrecion", false);
+#endif
+            }
+        }
         public string UpDownGlyph
         {
             get { return updownGlyph; }
-            set 
+            set
             {
                 updownGlyph = value;
                 OnPropertyChanged(nameof(UpDownGlyph));
@@ -149,6 +158,21 @@ namespace CollectionViewSample
             string temp = updownGlyph;
             UpDownGlyph = "";
             UpDownGlyph = temp;
+        }
+        private string bytearray2string(byte[] b)
+        {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < b.Length; i++)
+            {
+                sb.Append(b[i].ToString("X2"));
+            }
+            return sb.ToString();
+        }
+
+        private string glyph2string(string glyph)
+        {
+            byte[] b = Encoding.BigEndianUnicode.GetBytes(glyph);
+            return bytearray2string(b);
         }
     }
 }

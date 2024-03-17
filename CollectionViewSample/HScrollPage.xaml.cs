@@ -13,7 +13,7 @@ namespace CollectionViewSample
         private int loadnumber = 100;
         private int reloadnumber = 5000;
         private bool firsttime = true;
-        private bool glyphcorrection = false;
+//        private bool glyphcorrection = false;
         private CVPageViewModel? vmodel;
         private Thickness safeareainsets = new Thickness(0);
         private int firstvisibleIndex = 0;
@@ -22,22 +22,34 @@ namespace CollectionViewSample
         public HScrollPage()
         {
             InitializeComponent();
+#if DEBUG
+            loadnumber = 50;
+            reloadnumber = Preferences.Get("Reloadnumber,100);     
+#else
+            reloadnumber = Preferences.Get("Reloadnumber", 5000);
+#endif
+            double fsize = numberItemsEntry.FontSize;
+            numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("555555", fsize) + fsize + 10;
             vmodel = BindingContext as CVPageViewModel;
             if (vmodel != null)
             {
-                double fsize = nameLabel.FontSize;
                 vmodel.Cw0 = ScreenMetrics.MeasureTextWidth("5555", fsize) + fsize + 10;
                 vmodel.Cw1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + fsize + 10;
-                vmodel.Cw2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize + 10;
+                vmodel.Cw2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize + 10;                
             }
 
-#if ANDROID
-            glyphCorrectionCheckBox.IsEnabled = true;
+#if IOS
+            glyphCorrectionCheckBox.IsEnabled = false;
+            Microsoft.Maui.Handlers.ScrollViewHandler.Mapper.AppendToMapping("Disable_Bounce", (handler, view) =>
+            {
+                handler.PlatformView.Bounces = false;
+            });
+            //no handler for disabling CollectionView bouncing
+#else
+            if (Preferences.ContainsKey("AndroidGlyphCorrection"))
+                glyphCorrectionCheckBox.IsChecked = Preferences.Get("AndroidGlyphCorrection", false);
 #endif
-#if DEBUG
-            loadnumber = 50;
-            reloadnumber = 200;
-#endif            
+
         }
 
         protected async override void OnSizeAllocated(double width, double height)
@@ -144,6 +156,8 @@ namespace CollectionViewSample
         }
         private async void UpDown_Clicked(object sender, EventArgs e)
         {
+            if (settingsBorder.IsVisible)
+                settingsBorder.IsVisible = false;
             if (vmodel != null)
             {
                 if (vmodel.Cvc != null)
@@ -155,21 +169,25 @@ namespace CollectionViewSample
                             DeviceService.PlayClickSound();
                             if (vmodel != null)
                             {
-                                vmodel.IsBusy = true;
-                                await Task.Delay(100);
                                 if (vmodel.UpDownText == "Bottom")
                                 {
+                                    vmodel.UpDownGlyph = gotop;
+                                    vmodel.UpDownText = "Top";
+                                    await Task.Delay(100);
+                                    vmodel.IsBusy = true;
+                                    await Task.Delay(100);
                                     collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
                                     collectionView1.SelectedItem = cvc[^1];
-                                    vmodel.UpDownText = "Top";
-                                    vmodel.UpDownGlyph = gotop;
                                 }
                                 else if (vmodel.UpDownText == "Top")
                                 {
+                                    vmodel.UpDownGlyph = gobottom;
+                                    vmodel.UpDownText = "Bottom";
+                                    await Task.Delay(100);
+                                    vmodel.IsBusy = true;
+                                    await Task.Delay(100);
                                     collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
                                     collectionView1.SelectedItem = cvc[0];
-                                    vmodel.UpDownText = "Bottom";
-                                    vmodel.UpDownGlyph = gobottom;
                                 }
                                 vmodel.IsBusy = false;
                             }
@@ -180,7 +198,7 @@ namespace CollectionViewSample
         }
 
 
-        private void CollectionView1_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void CollectionView1_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             int index = -1;
             if (vmodel != null)
@@ -191,84 +209,68 @@ namespace CollectionViewSample
                     if (collectionView1.SelectedItem is CVcontent cvc)
                     {
                         index = vmodel.Cvc.IndexOf(cvc);
-
+                        for (int i = 0; i < cvcontent.Count; i++)
+                        {
+                            if (i == index)
+                                cvcontent[i].IsSelected = true;
+                            else
+                            {
+                                if (cvcontent[i].IsSelected)
+                                    cvcontent[i].IsSelected = false;
+                            }
+                        }
+                        if (vmodel.IsBusy)
+                            vmodel.IsBusy = false;
+                        //changing glyph of a disabled button may cause complications
                         if (index == 0)
                         {
+                            await Task.Delay(100);
                             vmodel.UpDownGlyph = gobottom;
                             vmodel.UpDownText = "Bottom";
                         }
                         else if (index == cvcontent.Count - 1)
                         {
+                            await Task.Delay(100);
                             vmodel.UpDownGlyph = gotop;
                             vmodel.UpDownText = "Top";
                         }
                     }
                 }
-                for (int i = 0; i < cvcontent.Count; i++)
-                {
-                    if (i == index)
-                        cvcontent[i].IsSelected = true;
-                    else
-                    {
-                        if (cvcontent[i].IsSelected)
-                        {
-                            cvcontent[i].IsSelected = false;
-                        }
-                    }
-                }
+
             }
         }
 
         private void Reload_Clicked(object sender, EventArgs e)
         {
             DeviceService.PlayClickSound();
+            if (settingsBorder.IsVisible)
+                settingsBorder.IsVisible = false;
             if (firsttime)
                 loadCollectionView(loadnumber);
             else
+            {
+                reloadnumber = Preferences.Get("Reloadnumber", reloadnumber);
                 loadCollectionView(reloadnumber);
+            }
         }
         private void Page_Appearing(object sender, EventArgs e)
         {
+            reloadnumber = Preferences.Get("Reloadnumber", reloadnumber);
+            numberItemsEntry.Text = reloadnumber.ToString();
             if (firsttime)
-            {
-                numberItemsEntry.Text = reloadnumber.ToString();
-                double fsize = numberItemsEntry.FontSize;
-                numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("555555", fsize) + fsize + 10;
                 loadCollectionView(loadnumber);
-            }
             else
             {
 #if ANDROID
-                if (glyphcorrection)
+                if (Preferences.Get("AndroidGlyphCorrection",false))
                 {
-                    if (glyphcorrection)
-                    {
-                        if (vmodel != null)
-                        {
-                            vmodel.UpdateUpDownGlyph();
-                        }
-                    }
-                }
+                    if (vmodel != null)
+                        vmodel.UpdateUpDownGlyph();
+                }                                 
 #endif
             }
         }
-        /*
-        private string bytearray2string(byte[] b)
-        {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < b.Length; i++)
-            {
-                sb.Append(b[i].ToString("X2"));
-            }
-            return sb.ToString();
-        }
 
-        private string glyph2string(string glyph)
-        {
-            byte[] b = Encoding.BigEndianUnicode.GetBytes(glyph);
-            return bytearray2string(b);
-        }
-        */
         private async void loadCollectionView(int numberitems)
         {
             try
@@ -282,7 +284,6 @@ namespace CollectionViewSample
                         if (vmodel.Cvc is List<CVcontent> cvc)
                         {
                             vmodel.IsBusy = true;
-                            vmodel.UpDownGlyph = hourglass;
                             vmodel.UpDownText = "Wait";
                             await Task.Delay(100);
                             if (cvc.Count > 0)
@@ -314,8 +315,6 @@ namespace CollectionViewSample
                             collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width - safeareainsets.Left - safeareainsets.Right);
                             collectionViewGrid.HeightRequest = Height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
 #endif
-
-
                             await Task.Delay(100);
                             collectionView1.SelectedItem = cvc[0];
                             collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
@@ -345,6 +344,8 @@ namespace CollectionViewSample
         }
         private async void GoButton_Clicked(object sender, EventArgs e)
         {
+            if (settingsBorder.IsVisible)
+                settingsBorder.IsVisible = false;
             await Shell.Current.GoToAsync("//noscroll");
         }
         private void SettingsButton_Clicked(object sender, EventArgs e)
@@ -353,7 +354,12 @@ namespace CollectionViewSample
             if (settingsBorder.IsVisible)
                 settingsBorder.IsVisible = false;
             else
-                settingsBorder.IsVisible = true;
+            {
+#if ANDROID
+                glyphCorrectionCheckBox.IsChecked = Preferences.Get("AndroidGlyphCorrection", false);
+#endif
+                settingsBorder.IsVisible = true;                
+            }
         }
 
         private async void ShowNavigationBarChecked_Changed(object sender, CheckedChangedEventArgs e)
@@ -419,6 +425,7 @@ namespace CollectionViewSample
                     if (num > 0)
                     {
                         reloadnumber = num;
+                        Preferences.Set("Reloadnumber", num);
                         loadCollectionView(num);
                     }
                 }
@@ -426,10 +433,7 @@ namespace CollectionViewSample
         }
         private void GlyphCorrectionChecked_Changed(object sender, CheckedChangedEventArgs e)
         {
-            if (sender is CheckBox checkBox)
-            {
-                glyphcorrection = checkBox.IsChecked;
-            }
+            Preferences.Set("AndroidGlyphCorrection", e.Value);
         }
 
         private void CollectionView_Scrolled(object sender, ItemsViewScrolledEventArgs e)

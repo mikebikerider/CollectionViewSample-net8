@@ -13,35 +13,34 @@ public partial class NoScrollPage : ContentPage
     private int reloadnumber = 5000;
     private bool firsttime = true;
     private CVPageViewModel? vmodel;
-    private bool glyphcorrection = false;
+//    private bool glyphcorrection = false;
     private Thickness safeareainsets = new Thickness(0);
     public NoScrollPage()
     {
         InitializeComponent();
+        double fsize = numberItemsEntry.FontSize;
+        numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("555555", fsize) + fsize + 10;
         vmodel = BindingContext as CVPageViewModel;
         if (vmodel != null)
         {
-            double fsize = nameLabel.FontSize;
             vmodel.Cw0 = ScreenMetrics.MeasureTextWidth("5555", fsize) + fsize + 10;
             vmodel.Cw1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + fsize + 10;
             vmodel.Cw2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize + 10;
+
         }
 
 #if IOS
-        Microsoft.Maui.Handlers.ScrollViewHandler.Mapper.AppendToMapping("Disable_Bounce", (handler, view) =>
-        {
-            handler.PlatformView.Bounces = false;
-        });
-        //currently no similar way of disabling CollectionView bouncing
-#endif
-#if ANDROID
-        glyphCorrectionCheckBox.IsEnabled = true;
-        glyphCorrectionCheckBox.IsChecked = false;
+        glyphCorrectionCheckBox.IsEnabled = false;
+#else
+        if (Preferences.ContainsKey("AndroidGlyphCorrection"))
+            glyphCorrectionCheckBox.IsChecked = Preferences.Get("AndroidGlyphCorrection", false);
 #endif
 
 #if DEBUG
         loadnumber = 100;
-        reloadnumber = 200;
+        reloadnumber = Preferences.Get("Reloadnumber,200);
+#else
+        reloadnumber = Preferences.Get("Reloadnumber", 5000);
 #endif
     }
     protected override async void OnSizeAllocated(double width, double height)
@@ -52,8 +51,7 @@ public partial class NoScrollPage : ContentPage
 #if ANDROID
         collectionViewGrid.HeightRequest = height - bottomBorder.Height;
 #else
-        //the above line is not needed under iOS, however if issued in an app running on iPhone with the notch or dynamic island
-        //then the bottomGrid will ber resized to size larger than width by the sum of the left and right inset
+        //otherwise the grid will be sized to size larger than width by the sum of the left and right inset
         safeareainsets = On<iOS>().SafeAreaInsets();
         collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
 #endif
@@ -62,11 +60,6 @@ public partial class NoScrollPage : ContentPage
     }
     public void SetAppTheme(AppTheme apptheme)
     {
-        //On Android FontImageSource images for page in view during theme change will be updated correctly but after moving to another page and back graphics will disappear
-        //font graphics on pages not in view during the theme change are not affected and will be rendered correctly when after moving to a different page and back
-        //until the glyph is changed in code behind
-        //does not happen on iOS
-
         try
         {
             if (vmodel != null)
@@ -98,7 +91,6 @@ public partial class NoScrollPage : ContentPage
             w1 = Math.Max(w1, ScreenMetrics.MeasureTextWidth(cvc[i].FirstName, fsize) + 10);
             w2 = Math.Max(w2, ScreenMetrics.MeasureTextWidth(cvc[i].LastName, fsize) + 10);
         }
-   //     double cw = Math.Max(Width, w0 + w1 + w2);
         for (int i = 0; i < cvc.Count; i++)
         {
             cvc[i].Cw0 = w0;
@@ -139,6 +131,8 @@ public partial class NoScrollPage : ContentPage
     */
     private async void UpDown_Clicked(object sender, EventArgs e)
     {
+        if (settingsBorder.IsVisible)
+            settingsBorder.IsVisible = false;
         if (vmodel != null)
         {
             if (vmodel.Cvc != null)
@@ -150,21 +144,25 @@ public partial class NoScrollPage : ContentPage
                         DeviceService.PlayClickSound();
                         if (vmodel != null)
                         {
-                            vmodel.IsBusy = true;
-                            await Task.Delay(100);
                             if (vmodel.UpDownText == "Bottom")
                             {
+                                vmodel.UpDownGlyph = gotop;
+                                vmodel.UpDownText = "Top";
+                                await Task.Delay(100);
+                                vmodel.IsBusy = true;
+                                await Task.Delay(100);
                                 collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
                                 collectionView1.SelectedItem = cvc[^1];
-                                vmodel.UpDownText = "Top";
-                                vmodel.UpDownGlyph = gotop;
                             }
                             else if (vmodel.UpDownText == "Top")
                             {
+                                vmodel.UpDownGlyph = gobottom;
+                                vmodel.UpDownText = "Bottom";
+                                await Task.Delay(100);
+                                vmodel.IsBusy = true;
+                                await Task.Delay(100);
                                 collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
                                 collectionView1.SelectedItem = cvc[0];
-                                vmodel.UpDownText = "Bottom";
-                                vmodel.UpDownGlyph = gobottom;
                             }
                             vmodel.IsBusy = false;
                         }
@@ -174,9 +172,9 @@ public partial class NoScrollPage : ContentPage
         }
     }
 
-    private void CollectionView1_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void CollectionView1_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        int index = -1;
+        int index;
         if (vmodel != null)
         {
             List<CVcontent> cvcontent = vmodel.Cvc;
@@ -185,28 +183,30 @@ public partial class NoScrollPage : ContentPage
                 if (collectionView1.SelectedItem is CVcontent cvc)
                 {
                     index = vmodel.Cvc.IndexOf(cvc);
-
+                    for (int i = 0; i < cvcontent.Count; i++)
+                    {
+                        if (i == index)
+                            cvcontent[i].IsSelected = true;
+                        else
+                        {
+                            if (cvcontent[i].IsSelected)
+                                cvcontent[i].IsSelected = false;
+                        }
+                    }
+                    if (vmodel.IsBusy)
+                        vmodel.IsBusy = false;
+                    //changing glyph of a disabled button may cause complications
                     if (index == 0)
                     {
+                        await Task.Delay(100);
                         vmodel.UpDownGlyph = gobottom;
                         vmodel.UpDownText = "Bottom";
                     }
                     else if (index == cvcontent.Count - 1)
                     {
+                        await Task.Delay(100);
                         vmodel.UpDownGlyph = gotop;
                         vmodel.UpDownText = "Top";
-                    }
-                }
-            }
-            for (int i = 0; i < cvcontent.Count; i++)
-            {
-                if (i == index)
-                    cvcontent[i].IsSelected = true;
-                else
-                {
-                    if (cvcontent[i].IsSelected)
-                    {
-                        cvcontent[i].IsSelected = false;
                     }
                 }
             }
@@ -219,19 +219,22 @@ public partial class NoScrollPage : ContentPage
         if (firsttime)
             loadCollectionView(loadnumber);
         else
+        {
+            reloadnumber = Preferences.Get("Reloadnumber",reloadnumber);
             loadCollectionView(reloadnumber);
+        }
     }
 
     private void Page_Appearing(object sender, EventArgs e)
     {
-
+        reloadnumber = Preferences.Get("Reloadnumber", reloadnumber);
+        numberItemsEntry.Text = reloadnumber.ToString();
         if (firsttime)
         {
             try
             {
                 double fsize = numberItemsEntry.FontSize;
                 numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("555555", fsize) + fsize + 10;
-                numberItemsEntry.Text = reloadnumber.ToString();
                 loadCollectionView(loadnumber);
             }
             catch { }
@@ -240,15 +243,14 @@ public partial class NoScrollPage : ContentPage
         else
         {
 #if ANDROID
-            if (glyphcorrection)
+            if (Preferences.Get("AndroidGlyphCorrection",false))
             {
                 if (vmodel != null)
-                {
                     vmodel.UpdateUpDownGlyph();
-                }
             }
 #endif
         }
+
 
     }
 
@@ -262,7 +264,7 @@ public partial class NoScrollPage : ContentPage
             {
 
                         vmodel.IsBusy = true;
-                        vmodel.UpDownGlyph = hourglass;
+//                        vmodel.UpDownGlyph = hourglass;
                         vmodel.UpDownText = "Wait";
                         await Task.Delay(100);
                         bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
@@ -311,6 +313,8 @@ public partial class NoScrollPage : ContentPage
     private async void GoButton_Clicked(object sender, EventArgs e)
     {
         DeviceService.PlayClickSound();
+        if (settingsBorder.IsVisible)
+            settingsBorder.IsVisible = false;
         await Shell.Current.GoToAsync("//hscroll");
     }
 
@@ -320,7 +324,12 @@ public partial class NoScrollPage : ContentPage
         if (settingsBorder.IsVisible)
             settingsBorder.IsVisible = false;
         else
+        {
+#if ANDROID
+            glyphCorrectionCheckBox.IsChecked = Preferences.Get("AndroidGlyphCorrection", false);
+#endif
             settingsBorder.IsVisible = true;
+        }
     }
 
     private void ShowNavigationBarChecked_Changed(object sender, CheckedChangedEventArgs e)
@@ -364,6 +373,7 @@ public partial class NoScrollPage : ContentPage
                     if (num > 0)
                     {
                         reloadnumber = num;
+                        Preferences.Set("Reloadnumber", num);
                         loadCollectionView(num);
                     }
                 }
@@ -386,9 +396,6 @@ public partial class NoScrollPage : ContentPage
 
     private void GlyphCorrectionChecked_Changed(object sender, CheckedChangedEventArgs e)
     {
-        if (sender is CheckBox checkBox)
-        {
-            glyphcorrection = checkBox.IsChecked;
-        }
+        Preferences.Set("AndroidGlyphCorrection", e.Value);
     }
 }
