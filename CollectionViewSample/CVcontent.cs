@@ -109,17 +109,8 @@ namespace CollectionViewSample
         {
             get { return new GridLength(Cw2, GridUnitType.Absolute); }
         }
-        /*
-        public GridLength W3
-        {
-            get { return new GridLength(Cw3, GridUnitType.Absolute); }
-        }
-        public GridLength H
-        {
-            get { return new GridLength(Rh, GridUnitType.Absolute); }
-        }
-        */
     }
+    /*
     public class NoHSContentViewModel
     {
         public IList<CVcontent>  CvContent { get; set; }
@@ -150,4 +141,5 @@ namespace CollectionViewSample
             }
         }
     }
+    */
 }

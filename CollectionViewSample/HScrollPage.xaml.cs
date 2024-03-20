@@ -9,22 +9,18 @@ namespace CollectionViewSample
     {
         private static string gotop = "\ue25a";
         private static string gobottom = "\ue258";
-        private static string hourglass = "\uea5b";
         private int loadnumber = 100;
         private int reloadnumber = 5000;
         private bool firsttime = true;
-//        private bool glyphcorrection = false;
         private CVPageViewModel? vmodel;
         private Thickness safeareainsets = new Thickness(0);
-        private int firstvisibleIndex = 0;
-        private int lastvisibleIndex = 0;
 
         public HScrollPage()
         {
             InitializeComponent();
 #if DEBUG
             loadnumber = 50;
-            reloadnumber = Preferences.Get("Reloadnumber,100);     
+            reloadnumber = Preferences.Get("Reloadnumber",100);     
 #else
             reloadnumber = Preferences.Get("Reloadnumber", 5000);
 #endif
@@ -33,9 +29,11 @@ namespace CollectionViewSample
             vmodel = BindingContext as CVPageViewModel;
             if (vmodel != null)
             {
-                vmodel.Cw0 = ScreenMetrics.MeasureTextWidth("5555", fsize) + fsize + 10;
+                vmodel.Fsize = nameLabel.FontSize;
+                vmodel.Cw0 = ScreenMetrics.MeasureTextWidth("55555", fsize) + fsize + 10;
                 vmodel.Cw1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + fsize + 10;
-                vmodel.Cw2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize + 10;                
+                vmodel.Cw2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize + 10;  
+                vmodel.Cw3 = ScreenMetrics.MeasureTextWidth("Column 3", fsize) + fsize + 10;
             }
 
 #if IOS
@@ -58,11 +56,10 @@ namespace CollectionViewSample
             //iOS net8.0 after screen is rotated the bottom rows do not scroll into view
             base.OnSizeAllocated(width, height);
             double safewidth = width;
-            await Task.Delay(100);            
+            await Task.Delay(100);
 #if ANDROID
             //without this line loading is very slow to forever
             collectionViewGrid.HeightRequest = height - bottomBorder.Height;
-            collectionView1.HeightRequest = height - bottomBorder.Height - headerGrid.Height;
 #else
             //on iPhone with the nothch or dynamic island Grid inside a ScrollView is not resized corretly
             //dimensions seem miscalcullated by safe area insets values and require correction
@@ -71,21 +68,17 @@ namespace CollectionViewSample
 #endif
             if (vmodel != null)
             {
-                vmodel.IsBusy = true;
-                await Task.Delay(100);
-                if (vmodel.Cvc != null)
+                vmodel.SafeWidth = safewidth;
+                if (vmodel.CvcCount > 0)
                 {
-                    if (vmodel.Cvc is List<CVcontent> cvc)
-                    {
-                        double cw = safewidth;
-                        double[] w  = await ContentColumnsWidth(cvc,nameLabel.FontSize);
-                        collectionViewGrid.WidthRequest = Math.Max(safewidth, w[0] + w[1] + w[2] + w[3]);
+                    await Task.Delay(100);
+                    double[] w = await vmodel.ContentColumnsWidth();
+                    collectionViewGrid.WidthRequest = Math.Max(safewidth, w[0] + w[1] + w[2] + w[3]);
+                }
 #if IOS
                         collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
 #endif
-                    }
-                }
-                vmodel.IsBusy = false;
+
             }
         }
         public void SetAppTheme(AppTheme apptheme)
@@ -114,6 +107,8 @@ namespace CollectionViewSample
             }
             catch { }
         }
+        //moved into ViewModel;
+        /*
         private Task<double[]> ContentColumnsWidth(List<CVcontent> cvc, double fsize)
         {
             double w0 = ScreenMetrics.MeasureTextWidth("5555", fsize) + fsize + 10;
@@ -141,6 +136,7 @@ namespace CollectionViewSample
             double[] w = [w0,w1,w2,w3];
             return Task.FromResult(w);
         }
+        */
         private void CollectionViewItem_Tapped(object sender, TappedEventArgs e)
         {
             if (settingsBorder.IsVisible)
@@ -166,26 +162,18 @@ namespace CollectionViewSample
                     {
                         if (cvc.Count > 0)
                         {
-                            DeviceService.PlayClickSound();
                             if (vmodel != null)
                             {
+                                DeviceService.PlayClickSound();
+                                vmodel.IsBusy = true;
+                                await Task.Delay(100);
                                 if (vmodel.UpDownText == "Bottom")
                                 {
-                                    vmodel.UpDownGlyph = gotop;
-                                    vmodel.UpDownText = "Top";
-                                    await Task.Delay(100);
-                                    vmodel.IsBusy = true;
-                                    await Task.Delay(100);
                                     collectionView1.ScrollTo(cvc[^1], null, ScrollToPosition.End, false);
                                     collectionView1.SelectedItem = cvc[^1];
                                 }
-                                else if (vmodel.UpDownText == "Top")
+                                else
                                 {
-                                    vmodel.UpDownGlyph = gobottom;
-                                    vmodel.UpDownText = "Bottom";
-                                    await Task.Delay(100);
-                                    vmodel.IsBusy = true;
-                                    await Task.Delay(100);
                                     collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
                                     collectionView1.SelectedItem = cvc[0];
                                 }
@@ -219,18 +207,24 @@ namespace CollectionViewSample
                                     cvcontent[i].IsSelected = false;
                             }
                         }
-                        if (vmodel.IsBusy)
-                            vmodel.IsBusy = false;
-                        //changing glyph of a disabled button may cause complications
                         if (index == 0)
                         {
-                            await Task.Delay(100);
+                            //changing glyph of a disabled button may cause complications
+                            if (vmodel.IsBusy)
+                            { 
+                                vmodel.IsBusy = false;
+                                await Task.Delay(100);
+                            }
                             vmodel.UpDownGlyph = gobottom;
                             vmodel.UpDownText = "Bottom";
                         }
                         else if (index == cvcontent.Count - 1)
                         {
-                            await Task.Delay(100);
+                            if (vmodel.IsBusy)
+                            {
+                                vmodel.IsBusy = false;
+                                await Task.Delay(100);
+                            }
                             vmodel.UpDownGlyph = gotop;
                             vmodel.UpDownText = "Top";
                         }
@@ -253,20 +247,24 @@ namespace CollectionViewSample
                 loadCollectionView(reloadnumber);
             }
         }
-        private void Page_Appearing(object sender, EventArgs e)
+        private async void Page_Appearing(object sender, EventArgs e)
         {
             reloadnumber = Preferences.Get("Reloadnumber", reloadnumber);
             numberItemsEntry.Text = reloadnumber.ToString();
             if (firsttime)
+            {
+                //otherwise bottom bar graphics are not displayed until ColllectionView loads
+                await Task.Delay(100);
                 loadCollectionView(loadnumber);
+            }
             else
             {
 #if ANDROID
-                if (Preferences.Get("AndroidGlyphCorrection",false))
+                if (Preferences.Get("AndroidGlyphCorrection", false))
                 {
                     if (vmodel != null)
                         vmodel.UpdateUpDownGlyph();
-                }                                 
+                }
 #endif
             }
         }
@@ -279,49 +277,46 @@ namespace CollectionViewSample
                 collectionView1.SelectedItem = null;
                 if (vmodel != null)
                 {
-                    if (vmodel.Cvc != null)
+                    vmodel.IsBusy = true;
+                    vmodel.Fsize = nameLabel.FontSize;
+                    vmodel.UpDownText = "Wait";
+                    await Task.Delay(100);
+                    bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
+                    List<CVcontent> cvl = new List<CVcontent>();
+                    for (int i = 0; i < numberitems; i++)
                     {
-                        if (vmodel.Cvc is List<CVcontent> cvc)
-                        {
-                            vmodel.IsBusy = true;
-                            vmodel.UpDownText = "Wait";
-                            await Task.Delay(100);
-                            if (cvc.Count > 0)
-                                cvc.Clear();
-                            bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
-                            List<CVcontent> cvl = new List<CVcontent>();
-                            for (int i = 0; i < numberitems; i++)
-                            {
-                                cvl.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", ""), Occupation = Path.GetRandomFileName().Replace(".", "") });
-                            }
-                            double[] w = await ContentColumnsWidth(cvl, nameLabel.FontSize);
-                            vmodel.Cw0 = w[0];
-                            vmodel.Cw1 = w[1];
-                            vmodel.Cw2 = w[2];
-                            await Task.Delay(100);
-                            vmodel.Cvc = cvl;
-                            cvc = vmodel.Cvc;
-                            //do not use binding for this WidthRequest, does not work properly
-                            //vmodel.W = Math.Max(Width, w[0] + w[1] + w[2] + w[3]);
-                            if (Debugger.IsAttached)
-                            {
-                                Debug.WriteLine("Height: " + Height.ToString());
-                            }
-                            await Task.Delay(200);
+                        cvl.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", ""), Occupation = Path.GetRandomFileName().Replace(".", "") });
+                    }
+                    /*
+                    double[] w = await ContentColumnsWidth(cvl, nameLabel.FontSize);
+                    vmodel.Cw0 = w[0];
+                    vmodel.Cw1 = w[1];
+                    vmodel.Cw2 = w[2];
+                    await Task.Delay(100);
+                    */
+                    vmodel.Cvc = cvl;
+                    await Task.Delay(100);
+                    List<CVcontent> cvc = vmodel.Cvc;
+                    //do not use binding for this WidthRequest, does not work properly
+                    //vmodel.W = Math.Max(Width, w[0] + w[1] + w[2] + w[3]);
+                    if (Debugger.IsAttached)
+                    {
+                        Debug.WriteLine("Height: " + Height.ToString());
+                    }
+                    await Task.Delay(200);
+                    collectionViewGrid.WidthRequest = vmodel.ContentWidth;
 #if ANDROID
-                            collectionViewGrid.WidthRequest = Math.Max(Width, w[0] + w[1] + w[2] + w[3]);
-                            collectionViewGrid.HeightRequest = Height - bottomBorder.Height;
+                    //                            collectionViewGrid.WidthRequest = Math.Max(Width, w[0] + w[1] + w[2] + w[3]);
+                    collectionViewGrid.HeightRequest = Height - bottomBorder.Height;
 #else
-                            collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width - safeareainsets.Left - safeareainsets.Right);
+//                            collectionViewGrid.WidthRequest = Math.Max(w[0] + w[1] + w[2] + w[3], Width - safeareainsets.Left - safeareainsets.Right);
                             collectionViewGrid.HeightRequest = Height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
 #endif
-                            await Task.Delay(100);
-                            collectionView1.SelectedItem = cvc[0];
-                            collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
-                            firsttime = false;
-                            vmodel.IsBusy = false;
-                        }
-                    }
+                    await Task.Delay(100);
+                    collectionView1.SelectedItem = cvc[0];
+                    collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
+                    firsttime = false;
+                    vmodel.IsBusy = false;
                 }
             }
             catch (Exception x)
@@ -434,12 +429,6 @@ namespace CollectionViewSample
         private void GlyphCorrectionChecked_Changed(object sender, CheckedChangedEventArgs e)
         {
             Preferences.Set("AndroidGlyphCorrection", e.Value);
-        }
-
-        private void CollectionView_Scrolled(object sender, ItemsViewScrolledEventArgs e)
-        {
-            firstvisibleIndex = e.FirstVisibleItemIndex;
-            lastvisibleIndex = e.LastVisibleItemIndex;
         }
     }
 }

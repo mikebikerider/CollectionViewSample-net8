@@ -44,7 +44,7 @@
                         <Label Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 3" LineBreakMode="NoWrap"/>
                     </Border>
                 </Grid>
-                <CollectionView x:Name="collectionView1" Grid.Row="1" SelectionMode="Single" ItemsLayout="VerticalList" ItemsSource="{Binding Cvc}" IsGrouped="False" Opacity="{Binding CVopacity}" SelectionChanged="CollectionView1_SelectionChanged" Scrolled="CollectionView_Scrolled">
+                <CollectionView x:Name="collectionView1" Grid.Row="1" SelectionMode="Single" ItemsLayout="VerticalList" ItemsSource="{Binding Cvc}" IsGrouped="False" Opacity="{Binding CVopacity}" SelectionChanged="CollectionView1_SelectionChanged">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="local:CVcontent">
                             <Grid BackgroundColor="{Binding textcolor}" WidthRequest="{Binding W}">
@@ -58,7 +58,7 @@
                                     <RowDefinition Height="auto"/>
                                 </Grid.RowDefinitions>
                                 <Border Grid.Column="0" Stroke="{Binding textcolor}" StrokeThickness=".5" BackgroundColor="{Binding color}">
-                                    <Label Margin="5,5,10,5" HorizontalOptions="End" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding ItemNo}" LineBreakMode="TailTruncation">
+                                    <Label Margin="5,5,5,5" HorizontalOptions="End" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding ItemNo}" LineBreakMode="TailTruncation">
                                         <Label.GestureRecognizers>
                                             <TapGestureRecognizer Tapped="CollectionViewItem_Tapped"/>
                                         </Label.GestureRecognizers>
@@ -105,25 +105,25 @@
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <Entry Grid.Column="1" Grid.Row="1" x:Name="numberItemsEntry" Margin="10,0,10,0" HorizontalTextAlignment="End" VerticalTextAlignment="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" MaxLength="6" Keyboard="Numeric" TextChanged="NumberItems_Changed" Completed="NumberItems_Completed" Unfocused="NumberItems_Unfocused"/>
+                <Entry Grid.Column="1" Grid.Row="1" x:Name="numberItemsEntry" Margin="10,0,30,0" HorizontalTextAlignment="End" VerticalTextAlignment="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" MaxLength="6" Keyboard="Numeric" TextChanged="NumberItems_Changed" Completed="NumberItems_Completed" Unfocused="NumberItems_Unfocused"/>
                 <Label Grid.Column="0" Grid.Row="2" Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Measure all items">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <CheckBox Grid.Column="1" Grid.Row="2" Margin="0,0,10,0" HorizontalOptions="End" VerticalOptions="Center" Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="True" CheckedChanged="MeasureItems_CheckedChanged"/>
+                <CheckBox Grid.Column="1" Grid.Row="2" Margin="0,0,20,0" HorizontalOptions="End" VerticalOptions="Center" Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="True" CheckedChanged="MeasureItems_CheckedChanged"/>
                 <Label Grid.Column="0" Grid.Row="3" Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Show navigation bar">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <CheckBox Grid.Column="1" Grid.Row="3" x:Name="navBarCheckBox" Margin="0,0,10,0" HorizontalOptions="End" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="true" CheckedChanged="ShowNavigationBarChecked_Changed"/>
+                <CheckBox Grid.Column="1" Grid.Row="3" x:Name="navBarCheckBox" Margin="0,0,20,0" HorizontalOptions="End" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" IsChecked="true" CheckedChanged="ShowNavigationBarChecked_Changed"/>
                 <Label Grid.Column="0" Grid.Row="4" Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Android glyph correction">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <CheckBox Grid.Column="1" Grid.Row="4" x:Name="glyphCorrectionCheckBox" Margin="0,0,10,0" HorizontalOptions="End" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" CheckedChanged="GlyphCorrectionChecked_Changed"/>
+                <CheckBox Grid.Column="1" Grid.Row="4" x:Name="glyphCorrectionCheckBox" Margin="0,0,20,0" HorizontalOptions="End" VerticalOptions="Center"  Color="{AppThemeBinding Light=Black, Dark= White }" CheckedChanged="GlyphCorrectionChecked_Changed"/>
             </Grid>
         </Border>
         <Border Grid.Row="1" x:Name="bottomBorder" Stroke="{AppThemeBinding Light=Blue, Dark=White}" StrokeThickness="2" BackgroundColor="{AppThemeBinding Light=White, Dark=#414A4C}">
