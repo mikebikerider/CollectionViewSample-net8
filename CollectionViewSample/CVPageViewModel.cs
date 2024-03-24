@@ -18,7 +18,9 @@ namespace CollectionViewSample
         private double w1 = 0;
         private double w2 = 0;
         private double w3 = 0;
-        private List<CVcontent> cvc = new List<CVcontent>();
+        private double cvheightrequest;
+        private double cvwidthrequest;
+        private List<CVcontent> cvc = new();
 
         private void OnPropertyChanged([CallerMemberName] string name = "")
         {
@@ -48,6 +50,24 @@ namespace CollectionViewSample
             if (Cw3 > 0)
                 Cw3 = w[3];
             
+        }
+        public double CvWidthRequest
+        {
+            get { return cvwidthrequest; }
+            set
+            {
+                cvwidthrequest = value;
+                OnPropertyChanged(nameof(CvWidthRequest));
+            }
+        }
+        public double CvHeightRequest
+        {
+            get { return cvheightrequest; }
+            set
+            {
+                cvheightrequest = value;
+                OnPropertyChanged(nameof(CvHeightRequest));
+            }
         }
         public double ContentWidth
         {
@@ -80,6 +100,7 @@ namespace CollectionViewSample
                 cvc[i].W = cw;
             }
             double[] _w = [_w0, _w1, _w2, _w3];
+            OnPropertyChanged(nameof(ContentWidth));
             return Task.FromResult(_w);
         }
         public int CvcCount
@@ -132,12 +153,7 @@ namespace CollectionViewSample
             get { return w3;}
             set { w3 = value; }
         }
-        /*
-        public double Cw
-        {
-            get { return Cw0 + Cw1 + Cw2 + Cw3; }
-        }
-        */
+
         public GridLength W0
         {
             get { return new GridLength(Cw0, GridUnitType.Absolute); }

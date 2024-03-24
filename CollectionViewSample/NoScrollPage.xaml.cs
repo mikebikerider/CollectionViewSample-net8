@@ -8,7 +8,7 @@ public partial class NoScrollPage : ContentPage
 {
     private static string gotop = "\ue25a";
     private static string gobottom = "\ue258";
-    private static string hourglass = "\uea5b";
+
     private int loadnumber = 200;
     private int reloadnumber = 5000;
     private bool firsttime = true;
@@ -83,29 +83,7 @@ public partial class NoScrollPage : ContentPage
         }
         catch { }
     }
-    //moved to the ViewModel
-    /*
-    private Task<double[]> ContentColumnsWidth(List<CVcontent> cvc, double fsize)
-    {
-        double w0 = ScreenMetrics.MeasureTextWidth("55555", fsize) + 10;
-        double w1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + 10;
-        double w2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + 10;
-        for (int i = 0; i < cvc.Count; i++)
-        {
-            w0 = Math.Max(w0, ScreenMetrics.MeasureTextWidth(cvc[i].ItemNo, fsize) + 10); //right margin 10
-            w1 = Math.Max(w1, ScreenMetrics.MeasureTextWidth(cvc[i].FirstName, fsize) + 10);
-            w2 = Math.Max(w2, ScreenMetrics.MeasureTextWidth(cvc[i].LastName, fsize) + 10);
-        }
-        for (int i = 0; i < cvc.Count; i++)
-        {
-            cvc[i].Cw0 = w0;
-            cvc[i].Cw1 = w1;
-            cvc[i].Cw2 = w2;
-        }
-        double[] w = [w0, w1, w2];
-        return Task.FromResult(w);
-    }
-    */
+
     private void CollectionViewItem_Tapped(object sender, TappedEventArgs e)
     {
         if (settingsBorder.IsVisible)

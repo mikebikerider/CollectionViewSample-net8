@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:CollectionViewSample"
              x:Class="CollectionViewSample.NoScrollPage"
+             x:DataType="local:CVPageViewModel"
              HideSoftInputOnTapped="True"
              Appearing="Page_Appearing">
     <ContentPage.BindingContext>
