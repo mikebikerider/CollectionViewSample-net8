@@ -17,16 +17,10 @@ public partial class NoScrollPage : ContentPage
     public NoScrollPage()
     {
         InitializeComponent();
-        double fsize = numberItemsEntry.FontSize;
-        numberItemsEntry.WidthRequest = ScreenMetrics.MeasureTextWidth("555555", fsize) + fsize + 10;
         vmodel = BindingContext as CVPageViewModel;
-        if (vmodel != null)
-        {
-            vmodel.Fsize = nameLabel.FontSize;
-            vmodel.Cw0 = ScreenMetrics.MeasureTextWidth("55555", fsize) + fsize + 10;
-            vmodel.Cw1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + fsize + 10;
-            vmodel.Cw2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + fsize + 10;
-        }
+        double fsize = numberItemsEntry.FontSize;
+        if (vmodel != null )
+            vmodel.Fsize = fsize;
 
 #if IOS
         glyphCorrectionCheckBox.IsEnabled = false;
@@ -45,21 +39,22 @@ public partial class NoScrollPage : ContentPage
     protected override async void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
-        await Task.Delay(100);
         double safewidth = width;
-
-#if ANDROID
-        collectionViewGrid.HeightRequest = height - bottomBorder.Height;
-#else
-        safewidth = width - safeareainsets.Left - safeareainsets.Right;
-        //otherwise the grid will be sized to size larger than width by the sum of the left and right inset
-        safeareainsets = On<iOS>().SafeAreaInsets();
-        collectionViewGrid.HeightRequest = height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
-#endif
         if (vmodel != null)
+        {
+            vmodel.IsBusy = true;
+            await Task.Delay(100);
+#if ANDROID
+            vmodel.CvgHeight = height - bottomBorder.Height;
+#else
+            safeareainsets = On<iOS>().SafeAreaInsets();
+            safewidth = width - safeareainsets.Left - safeareainsets.Right;
+            //otherwise the grid will be sized to size larger than width by the sum of the left and right inset
+            vmodel.CvgHeight = height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
+#endif
             vmodel.SafeWidth = safewidth;
-        if (Debugger.IsAttached)
-            Debug.WriteLine("Height allocated: " + height.ToString());
+            vmodel.IsBusy = false;
+        }
     }
     public void SetAppTheme(AppTheme apptheme)
     {
@@ -86,32 +81,34 @@ public partial class NoScrollPage : ContentPage
 
     private void CollectionViewItem_Tapped(object sender, TappedEventArgs e)
     {
-        if (settingsBorder.IsVisible)
-            settingsBorder.IsVisible = false;
-        if (sender is Label l)
+        if (vmodel != null)
         {
-            if (l.BindingContext != null)
+            if (vmodel.SettingsVisible)
+                vmodel.SettingsVisible = false;
+            if (sender is Label l)
             {
-                if (l.BindingContext is CVcontent cvc)
-                    collectionView1.SelectedItem = cvc;
+                if (l.BindingContext != null)
+                {
+                    if (l.BindingContext is CVcontent cvc)
+                        collectionView1.SelectedItem = cvc;
+                }
             }
         }
     }
 
     private async void UpDown_Clicked(object sender, EventArgs e)
     {
-        if (settingsBorder.IsVisible)
-            settingsBorder.IsVisible = false;
         if (vmodel != null)
         {
+            if (vmodel.SettingsVisible)
+                vmodel.SettingsVisible = false;
             if (vmodel.Cvc != null)
             {
                 if (vmodel.Cvc is List<CVcontent> cvc)
                 {
                     if (cvc.Count > 0)
                     {
-                        if (vmodel != null)
-                        {
+
                             DeviceService.PlayClickSound();
                             vmodel.IsBusy = true;
                             await Task.Delay(100);
@@ -126,7 +123,6 @@ public partial class NoScrollPage : ContentPage
                                 collectionView1.SelectedItem = cvc[0];
                             }
                             vmodel.IsBusy = false;
-                        }
                     }
                 }
             }
@@ -224,13 +220,13 @@ public partial class NoScrollPage : ContentPage
     {
         try
         {
-            settingsBorder.IsVisible = false;
-            collectionView1.SelectedItem = null;
             if (vmodel != null)
             {
+                vmodel.SettingsVisible = false;
+                collectionView1.SelectedItem = null;
                 vmodel.IsBusy = true;
                 vmodel.UpDownText = "Wait";
-                vmodel.Fsize = nameLabel.FontSize;
+                vmodel.Cvc = new();
                 await Task.Delay(100);
                 bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
                 List<CVcontent> cvl = new List<CVcontent>();
@@ -241,11 +237,6 @@ public partial class NoScrollPage : ContentPage
                 vmodel.Cvc = cvl;
                 await Task.Delay(100);
                 List<CVcontent> cvc = vmodel.Cvc;
-#if iOS
-                        collectionViewGrid.WidthRequest = vmodel.ContentWidth; //Math.Max(w[0] + w[1] + w[2], Width) - safeareainsets.Left - safeareainsets.Right;
-                        collectionViewGrid.HeightRequest = Height - bottomBorder.Height - safeareainsets.Bottom - safeareainsets.Top;
-#endif
-                await Task.Delay(100);
                 //this line trigggers SelectionChanged event that will change the upDownIFS glyph and the button appearance 
                 collectionView1.SelectedItem = cvc[0];
                 collectionView1.ScrollTo(cvc[0], null, ScrollToPosition.Start, false);
@@ -261,37 +252,45 @@ public partial class NoScrollPage : ContentPage
 
     private async void MeasureItems_CheckedChanged(object sender, CheckedChangedEventArgs e)
     {
-        activityIndicator.IsRunning = true;
-        settingsBorder.IsVisible = false;
-        DeviceService.PlayClickSound();
-        await Task.Delay(500);
-
-        if (e.Value)
-            collectionView1.ItemSizingStrategy = ItemSizingStrategy.MeasureAllItems;
-        else
-            collectionView1.ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem;
-        activityIndicator.IsRunning = false;
+        if (vmodel != null)
+        {
+            vmodel.IsBusy = true;
+            vmodel.SettingsVisible = false;
+            DeviceService.PlayClickSound();
+            await Task.Delay(500);
+            if (e.Value)
+                collectionView1.ItemSizingStrategy = ItemSizingStrategy.MeasureAllItems;
+            else
+                collectionView1.ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem;
+            vmodel.IsBusy = false;
+        }
     }
 
     private async void GoButton_Clicked(object sender, EventArgs e)
     {
-        DeviceService.PlayClickSound();
-        if (settingsBorder.IsVisible)
-            settingsBorder.IsVisible = false;
-        await Shell.Current.GoToAsync("//hscroll");
+        if (vmodel != null)
+        {
+            DeviceService.PlayClickSound();
+            if (vmodel.SettingsVisible)
+                vmodel.SettingsVisible = false;
+            await Shell.Current.GoToAsync("//hscroll");
+        }
     }
 
     private void SettingsButton_Clicked(object sender, EventArgs e)
     {
-        DeviceService.PlayClickSound();
-        if (settingsBorder.IsVisible)
-            settingsBorder.IsVisible = false;
-        else
+        if (vmodel != null)
         {
+            DeviceService.PlayClickSound();
+            if (vmodel.SettingsVisible)
+                vmodel.SettingsVisible = false;
+            else
+            {
 #if ANDROID
             glyphCorrectionCheckBox.IsChecked = Preferences.Get("AndroidGlyphCorrection", false);
 #endif
-            settingsBorder.IsVisible = true;
+                vmodel.SettingsVisible = true;
+            }
         }
     }
 
@@ -299,9 +298,12 @@ public partial class NoScrollPage : ContentPage
     {
         try
         {
-            DeviceService.PlayClickSound();
-            settingsBorder.IsVisible = false;
-            Shell.SetNavBarIsVisible(this, navBarCheckBox.IsChecked);
+            if (vmodel != null)
+            {
+                DeviceService.PlayClickSound();
+                vmodel.SettingsVisible = false;
+                Shell.SetNavBarIsVisible(this, navBarCheckBox.IsChecked);
+            }
         }
         catch (Exception x)
         {
@@ -321,7 +323,8 @@ public partial class NoScrollPage : ContentPage
 
     private void SettingsLabel_Tapped(object sender, TappedEventArgs e)
     {
-        settingsBorder.IsVisible = false;
+        if (vmodel != null)
+            vmodel.SettingsVisible = false;
     }
 
     private void NumberItems_Unfocused(object sender, FocusEventArgs e)
@@ -349,10 +352,13 @@ public partial class NoScrollPage : ContentPage
     {
         try
         {
-            settingsBorder.IsVisible = false;
-            DeviceService.PlayClickSound();
-            Task.Delay(500);
-            loadCollectionView(reloadnumber);
+            if (vmodel != null)
+            {
+                vmodel.SettingsVisible = false;
+                DeviceService.PlayClickSound();
+                Task.Delay(500);
+                loadCollectionView(reloadnumber);
+            }
         }
         catch { }
     }

@@ -13,13 +13,16 @@ namespace CollectionViewSample
         private string updownText = "Bottom";
         private string updownGlyph = "\ue258";
         private double cvopacity = 1;
+        private double fsize = 18;
         private double w = 0;
         private double w0 = 0;
         private double w1 = 0;
         private double w2 = 0;
         private double w3 = 0;
-        private double cvheightrequest;
-        private double cvwidthrequest;
+        double rh = 0;
+        private double cvgheight = 0;
+        private double numericentrywidth = 40;
+        private bool settingsvisible = false;
         private List<CVcontent> cvc = new();
 
         private void OnPropertyChanged([CallerMemberName] string name = "")
@@ -32,83 +35,104 @@ namespace CollectionViewSample
             get { return cvc; }
             set
             {
+                ContentColumnsWidth(value);
                 cvc = value;
-                SetColumnsWidth();
                 OnPropertyChanged(nameof(Cvc));
             }
         }
-        public void UpdateDataSource()
+
+        public double CvgHeight
         {
-            OnPropertyChanged(nameof(Cvc));
-        }
-        private async  void SetColumnsWidth()
-        {
-            double[] w = await ContentColumnsWidth();
-            Cw0 = w[0];
-            Cw1 = w[1];
-            Cw2 = w[2];
-            if (Cw3 > 0)
-                Cw3 = w[3];
-            
-        }
-        public double CvWidthRequest
-        {
-            get { return cvwidthrequest; }
+            get { return cvgheight; }
             set
             {
-                cvwidthrequest = value;
-                OnPropertyChanged(nameof(CvWidthRequest));
+                cvgheight = value;
+                OnPropertyChanged(nameof(CvgHeight));
             }
         }
-        public double CvHeightRequest
+
+        public void CorrectStarColumnWidth(double width)
         {
-            get { return cvheightrequest; }
-            set
+            double _w = Math.Max(width, w0 + w1 + w2 + w3);
+            W = _w;
+            OnPropertyChanged(nameof(W));
+            for (int i = 0; i < cvc.Count; i++)
             {
-                cvheightrequest = value;
-                OnPropertyChanged(nameof(CvHeightRequest));
+                cvc[i].W = _w;
             }
         }
-        public double ContentWidth
-        {
-            get { return Math.Max(SafeWidth, w0 + w1 + w2 + w3); }
-        }
-        public Task<double[]> ContentColumnsWidth()
+        private void ContentColumnsWidth(List<CVcontent> clist)
         {
             double fsize = Fsize;
             double _w0 = ScreenMetrics.MeasureTextWidth("55555", fsize) + 20;
-            double _w1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + 10;
-            double _w2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + 10;
-            double _w3 = Cw3;
-
-            for (int i = 0; i < cvc.Count; i++)
+            double _w1 = ScreenMetrics.MeasureTextWidth("Column 1", fsize) + 40;
+            double _w2 = ScreenMetrics.MeasureTextWidth("Column 2", fsize) + 40;
+            double _w3 = 0;
+            for (int i = 0; i < clist.Count; i++)
             {
-                _w0 = Math.Max(_w0, ScreenMetrics.MeasureTextWidth(cvc[i].ItemNo, fsize) + 20);
-                _w1 = Math.Max(_w1, ScreenMetrics.MeasureTextWidth(cvc[i].FirstName, fsize) + 20);
-                _w2 = Math.Max(_w2, ScreenMetrics.MeasureTextWidth(cvc[i].LastName, fsize) + 20);
-                if (_w3 > 0)
-                    _w3 = Math.Max(_w3, ScreenMetrics.MeasureTextWidth(cvc[i].Occupation, fsize) + 20);
+                _w0 = Math.Max(_w0, ScreenMetrics.MeasureTextWidth(clist[i].ItemNo, fsize) + 20);
+                _w1 = Math.Max(_w1, ScreenMetrics.MeasureTextWidth(clist[i].FirstName, fsize) + 20);
+                _w2 = Math.Max(_w2, ScreenMetrics.MeasureTextWidth(clist[i].LastName, fsize) + 20);
+                if (!clist[i].Occupation.Equals(string.Empty))
+                    _w3 = Math.Max(_w3, ScreenMetrics.MeasureTextWidth(clist[i].Occupation, fsize) + 20);
 
             }
             double cw = Math.Max(SafeWidth, _w0 + _w1 + _w2 + _w3);
-            for (int i = 0; i < cvc.Count; i++)
+            W = cw;
+            for (int i = 0; i < clist.Count; i++)
             {
-                cvc[i].Cw0 = _w0;
-                cvc[i].Cw1 = _w1;
-                cvc[i].Cw2 = _w2;
-                cvc[i].Cw3 = _w3;
-                cvc[i].W = cw;
+                clist[i].Cw0 = _w0;
+                clist[i].Cw1 = _w1;
+                clist[i].Cw2 = _w2;
+                if (_w3 > 0)
+                    clist[i].Cw3 = _w3;
+                clist[i].W = cw;
+                clist[i].Rh = rh;
             }
-            double[] _w = [_w0, _w1, _w2, _w3];
-            OnPropertyChanged(nameof(ContentWidth));
-            return Task.FromResult(_w);
+
+            Cw0 = _w0;
+            Cw1 = _w1;
+            Cw2 = _w2;
+            if (_w3 > 0)
+                Cw3 = _w3;
         }
         public int CvcCount
         {
             get { return cvc.Count; }
         }
         public double SafeWidth { get; set; }
-        public double Fsize { get; set; } = 16;
+        public double Fsize
+        {
+            get { return fsize; }
+            set
+            {
+                fsize = value;
+                Cw0 = ScreenMetrics.MeasureTextWidth("55555", value) + 20;
+                Cw1 = ScreenMetrics.MeasureTextWidth("Column 1", value) + 40;
+                Cw2 = ScreenMetrics.MeasureTextWidth("Column 2", value) + 40;
+                Cw3 = ScreenMetrics.MeasureTextWidth("Column 3", value) + 40;
+                Rh = ScreenMetrics.MeasureTextHeight("abcdef", value) + 10;
+                NumericEntryWidth = ScreenMetrics.MeasureTextWidth("555555", value) + 10;
+            }
+        }
+        public double NumericEntryWidth
+        {
+            get { return numericentrywidth; }
+            set
+            {
+                numericentrywidth = value;
+                OnPropertyChanged(nameof(NumericEntryWidth));
+            }
+        }
+        public bool SettingsVisible
+        {
+            get { return settingsvisible; }
+            set
+            {
+                settingsvisible = value;
+                OnPropertyChanged(nameof(SettingsVisible));
+            }
+        }
         //DataTemplate WidthRequest
         public double W
         {
@@ -153,7 +177,15 @@ namespace CollectionViewSample
             get { return w3;}
             set { w3 = value; }
         }
-
+        public double Rh
+        {
+            get { return rh; }
+            set
+            {
+                rh = value;
+                OnPropertyChanged(nameof(H));
+            }
+        }
         public GridLength W0
         {
             get { return new GridLength(Cw0, GridUnitType.Absolute); }
@@ -166,7 +198,10 @@ namespace CollectionViewSample
         {
             get { return new GridLength(Cw2, GridUnitType.Absolute); }
         }
-
+        public GridLength H
+        {
+            get { return new GridLength(rh, GridUnitType.Absolute); }
+        }
         public bool ButtonEnabled
         {
             get { return buttonEnabled; }

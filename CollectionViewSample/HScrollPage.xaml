@@ -19,9 +19,9 @@
             <Label Grid.Column="1" HorizontalTextAlignment = "Center" VerticalTextAlignment="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Scroll in both directions" LineBreakMode="TailTruncation"/>
         </Grid>
     </Shell.TitleView>
-    <Grid x:Name="mainGrid" BackgroundColor="{AppThemeBinding Light=White, Dark=Black}" ColumnDefinitions="*" RowDefinitions="*,auto">
+    <Grid BackgroundColor="{AppThemeBinding Light=White, Dark=Black}" ColumnDefinitions="*" RowDefinitions="*,auto">
         <ScrollView x:Name="hscroller" Grid.Row="0" Orientation="Horizontal" VerticalScrollBarVisibility="Never">
-            <Grid x:Name="collectionViewGrid" ColumnDefinitions="*" RowDefinitions="auto,*">
+            <Grid x:Name="collectionViewGrid" ColumnDefinitions="*" RowDefinitions="auto,*" WidthRequest="{Binding W}" HeightRequest="{Binding CvgHeight}">
                 <Grid x:Name="headerGrid" Grid.Row="0" BackgroundColor="{AppThemeBinding Light=Black, Dark=White}">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="{Binding W0}"/>
@@ -30,19 +30,19 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="{Binding H}"/>
                     </Grid.RowDefinitions>
                     <Border Grid.Column="0" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness=".5" BackgroundColor="{AppThemeBinding Light=CornSilk, Dark=SlateGray}">
-                        <Label Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="#" LineBreakMode="NoWrap"/>
+                        <Label Margin="0,0,10,0" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="#" LineBreakMode="NoWrap"/>
                     </Border>
                     <Border Grid.Column="1" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness=".5" BackgroundColor="{AppThemeBinding Light=CornSilk, Dark=SlateGray}">
-                        <Label x:Name="nameLabel" Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 1" LineBreakMode="NoWrap"/>
+                        <Label x:Name="nameLabel" Margin="10,0,0,0" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 1" LineBreakMode="NoWrap"/>
                     </Border>
                     <Border Grid.Column="2" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness=".5" BackgroundColor="{AppThemeBinding Light=CornSilk, Dark=SlateGray}">
-                        <Label Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 2" LineBreakMode="NoWrap"/>
+                        <Label Margin="10,0,0,0" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 2" LineBreakMode="NoWrap"/>
                     </Border>
                     <Border Grid.Column="3" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness=".5" BackgroundColor="{AppThemeBinding Light=CornSilk, Dark=SlateGray}">
-                        <Label Margin="0,5,0,5" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 3" LineBreakMode="NoWrap"/>
+                        <Label Margin="10,0,0,0" HorizontalOptions="Center" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Column 3" LineBreakMode="NoWrap"/>
                     </Border>
                 </Grid>
                 <CollectionView x:Name="collectionView1" Grid.Row="1" SelectionMode="Single" ItemsLayout="VerticalList" ItemsSource="{Binding Cvc}" IsGrouped="False" Opacity="{Binding CVopacity}" SelectionChanged="CollectionView1_SelectionChanged">
@@ -56,31 +56,31 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"/>
+                                    <RowDefinition Height="{Binding H}"/>
                                 </Grid.RowDefinitions>
                                 <Border Grid.Column="0" Stroke="{Binding textcolor}" StrokeThickness=".5" BackgroundColor="{Binding color}">
-                                    <Label Margin="5,5,5,5" HorizontalOptions="End" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding ItemNo}" LineBreakMode="TailTruncation">
+                                    <Label Margin="0,0,5,0" HorizontalOptions="End" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding ItemNo}" LineBreakMode="TailTruncation">
                                         <Label.GestureRecognizers>
                                             <TapGestureRecognizer Tapped="CollectionViewItem_Tapped"/>
                                         </Label.GestureRecognizers>
                                     </Label>
                                 </Border>
                                 <Border Grid.Column="1" Stroke="{Binding textcolor}" StrokeThickness=".5" BackgroundColor="{Binding color}">
-                                    <Label Margin="5,5,5,5" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding FirstName}" LineBreakMode="TailTruncation">
+                                    <Label Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding FirstName}" LineBreakMode="TailTruncation">
                                         <Label.GestureRecognizers>
                                             <TapGestureRecognizer Tapped="CollectionViewItem_Tapped"/>
                                         </Label.GestureRecognizers>
                                     </Label>
                                 </Border>
                                 <Border Grid.Column="2" Stroke="{Binding textcolor}" StrokeThickness=".5" BackgroundColor="{Binding color}">
-                                    <Label Margin="5,5,5,5" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding LastName}" LineBreakMode="TailTruncation">
+                                    <Label Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding LastName}" LineBreakMode="TailTruncation">
                                         <Label.GestureRecognizers>
                                             <TapGestureRecognizer Tapped="CollectionViewItem_Tapped"/>
                                         </Label.GestureRecognizers>
                                     </Label>
                                 </Border>
                                 <Border Grid.Column="3" Stroke="{Binding textcolor}" StrokeThickness=".5" BackgroundColor="{Binding color}">
-                                    <Label Margin="5,5,5,5" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding Occupation}" LineBreakMode="TailTruncation">
+                                    <Label Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{Binding textcolor}" Text="{Binding Occupation}" LineBreakMode="TailTruncation">
                                         <Label.GestureRecognizers>
                                             <TapGestureRecognizer Tapped="CollectionViewItem_Tapped"/>
                                         </Label.GestureRecognizers>
@@ -92,8 +92,8 @@
                 </CollectionView>
             </Grid>
         </ScrollView>
-        <ActivityIndicator Grid.Row="0" x:Name="activityIndicator" HorizontalOptions="Center" VerticalOptions="Center" Color="{AppThemeBinding Light=Black, Dark=White}" IsRunning="{Binding IsBusy}"/>
-        <Border Grid.Row="0" x:Name="settingsBorder" Margin="0,70,0,0" VerticalOptions="Start" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness="2" BackgroundColor="{AppThemeBinding Light=White, Dark=#414A4C}" IsVisible="False">
+        <ActivityIndicator Grid.Row="0" HorizontalOptions="Center" VerticalOptions="Center" Color="{AppThemeBinding Light=Black, Dark=White}" IsRunning="{Binding IsBusy}"/>
+        <Border Grid.Row="0" x:Name="settingsBorder" Margin="0,70,0,0" VerticalOptions="Start" Stroke="{AppThemeBinding Light=Black, Dark=White}" StrokeThickness="2" BackgroundColor="{AppThemeBinding Light=White, Dark=#414A4C}" IsVisible="{Binding SettingsVisible}">
             <Grid ColumnSpacing="10" RowSpacing="10" ColumnDefinitions="*,auto" RowDefinitions="auto,auto,auto,auto,auto">
                 <Label Grid.Column="0" Grid.Row="0" Margin="10,0,0,0" HorizontalTextAlignment="Start" VerticalTextAlignment="Center" FontSize="Medium" Text="Settings"/>
                 <ImageButton Grid.Column="1" Grid.Row="0" x:Name="settingsCloseButton" Margin="0,0,5,0" HorizontalOptions="End" VerticalOptions="Center" Clicked="SettingsButton_Clicked">
@@ -106,7 +106,7 @@
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>
                     </Label.GestureRecognizers>
                 </Label>
-                <Entry Grid.Column="1" Grid.Row="1" x:Name="numberItemsEntry" Margin="10,0,30,0" HorizontalTextAlignment="End" VerticalTextAlignment="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" MaxLength="6" Keyboard="Numeric" TextChanged="NumberItems_Changed" Completed="NumberItems_Completed" Unfocused="NumberItems_Unfocused"/>
+                <Entry Grid.Column="1" Grid.Row="1" x:Name="numberItemsEntry" Margin="10,0,30,0" HorizontalTextAlignment="End" VerticalTextAlignment="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" MaxLength="6" WidthRequest="{Binding NumericEntryWidth}" Keyboard="Numeric" TextChanged="NumberItems_Changed" Completed="NumberItems_Completed" Unfocused="NumberItems_Unfocused"/>
                 <Label Grid.Column="0" Grid.Row="2" Margin="10,0,0,0" VerticalOptions="Center" FontSize="Medium" TextColor="{AppThemeBinding Light=Black, Dark=White}" Text="Measure all items">
                     <Label.GestureRecognizers>
                         <TapGestureRecognizer Tapped="SettingsLabel_Tapped"/>

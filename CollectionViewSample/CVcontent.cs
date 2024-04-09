@@ -109,37 +109,10 @@ namespace CollectionViewSample
         {
             get { return new GridLength(Cw2, GridUnitType.Absolute); }
         }
-    }
-    /*
-    public class NoHSContentViewModel
-    {
-        public IList<CVcontent>  CvContent { get; set; }
-        public int NumberItems { get; set; } = 500;
-
-        public NoHSContentViewModel()
+        public GridLength H
         {
-            CvContent = new List<CVcontent>();
-            bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
-            for (int i = 0; i < NumberItems; i++)
-            {
-                CvContent.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", "") });
-            }
+            get { return new GridLength(Rh,GridUnitType.Absolute);}
         }
     }
-    public class HSContentViewModel
-    {
-        public IList<CVcontent> CvContent { get; set; }
-        public int NumberItems { get; set; } = 50;
 
-        public HSContentViewModel()
-        {
-            CvContent = new List<CVcontent>();
-            bool isLightTheme = AppInfo.RequestedTheme.Equals(AppTheme.Light);
-            for (int i = 0; i < NumberItems; i++)
-            {
-                CvContent.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", ""), Occupation = Path.GetRandomFileName().Replace(".", "") });
-            }
-        }
-    }
-    */
 }
