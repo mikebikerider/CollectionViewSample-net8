@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls.PlatformConfiguration;
 using Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;
 using System.Diagnostics;
+using System.Text;
 
 namespace CollectionViewSample;
 
@@ -215,7 +216,18 @@ public partial class NoScrollPage : ContentPage
 #endif
         }
     }
-
+    private string RandomString(int length)
+    {
+        const string pool = "abcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random((int)DateTime.Now.Ticks);
+        for (var i = 0; i < length; i++)
+        {
+            char c = pool[random.Next(0, pool.Length)];
+            sb.Append(c);
+        }
+        return sb.ToString();
+    }
     private async void loadCollectionView(int numberitems)
     {
         try
@@ -232,7 +244,7 @@ public partial class NoScrollPage : ContentPage
                 List<CVcontent> cvl = new List<CVcontent>();
                 for (int i = 0; i < numberitems; i++)
                 {
-                    cvl.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = Path.GetRandomFileName().Replace(".", ""), LastName = Path.GetRandomFileName().Replace(".", "") });
+                    cvl.Add(new CVcontent { IsLightTheme = isLightTheme, ItemNumber = i + 1, FirstName = RandomString(10), LastName = RandomString(15) });
                 }
                 vmodel.Cvc = cvl;
                 await Task.Delay(100);

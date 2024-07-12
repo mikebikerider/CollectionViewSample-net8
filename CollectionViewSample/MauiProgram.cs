@@ -6,7 +6,7 @@ namespace CollectionViewSample
     {
         public static MauiApp CreateMauiApp()
         {
-            var builder = MauiApp.CreateBuilder();
+            var builder = MauiApp.CreateBuilder(true);
             builder.UseMauiApp<App>()
                         .ConfigureFonts(fonts =>
                         {
